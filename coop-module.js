@@ -41,7 +41,18 @@ const COOP={
 };
 
 const coopPeerCtor=()=>(typeof window!=='undefined'&&(window.Peer||(window.peerjs&&window.peerjs.Peer)))||null;
-const coopPeerOpts=()=>window.PN_PEER_OPTS||undefined;
+const coopPeerOpts=()=>window.PN_PEER_OPTS||{
+ config:{
+  iceServers:[
+   {urls:'stun:stun.l.google.com:19302'},
+   {urls:'stun:stun1.l.google.com:19302'},
+   {urls:'stun:stun2.l.google.com:19302'},
+   {urls:'stun:stun3.l.google.com:19302'},
+   {urls:'stun:stun4.l.google.com:19302'},
+   {urls:'stun:stun.cloudflare.com:3478'}
+  ]
+ }
+};
 
 
 function coopPlayerId(){
