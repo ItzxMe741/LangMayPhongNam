@@ -18,9 +18,44 @@
    ===================================================================== */
 const COOP_MAX=5,COOP_PREFIX='phongnam-',COOP_CHARS='ABCDEFGHJKMNPQRSTUVWXYZ23456789',COOP_KEY='phongnam_coop_map';
 const COOP_PLOTS=[null,{x0:44,x1:60,y0:41,y1:51,hx:46,hy:41},{x0:61,x1:76,y0:41,y1:51,hx:63,hy:41},{x0:44,x1:64,y0:3,y1:13,hx:46,hy:3},{x0:44,x1:64,y0:15,y1:25,hx:46,hy:15}];
-const COOP={on:false,role:null,slot:-1,peer:null,conn:null,conns:{},peers:{},code:'',status:'idle',msg:'',inVal:'',lastPos:'',posT:0,clockT:0,saveT:0,fromHost:false,joinTimer:null};
+
+const COOP={
+ on:false,
+ role:null,
+ slot:-1,
+ peer:null,
+ conn:null,
+ conns:{},
+ peers:{},
+ code:'',
+ status:'idle',
+ msg:'',
+ inVal:'',
+ lastPos:'',
+ posT:0,
+ clockT:0,
+ saveT:0,
+ pingT:0,
+ fromHost:false,
+ joinTimer:null
+};
+
 const coopPeerCtor=()=>(typeof window!=='undefined'&&(window.Peer||(window.peerjs&&window.peerjs.Peer)))||null;
 const coopPeerOpts=()=>window.PN_PEER_OPTS||undefined;
+
+
+function coopPlayerId(){
+ let id=localStorage.getItem('coop_pid');
+
+ if(!id){
+  id='p'+Math.random().toString(36).slice(2)+Date.now().toString(36);
+  localStorage.setItem('coop_pid',id);
+ }
+
+ return id;
+}
+
+
 /* --- sở hữu đất --- */
 const inHostFields=(x,y)=>(x>=3&&x<=37&&y>=42&&y<=77)||(x>=3&&x<=29&&y>=12&&y<=37);
 function coopPlotOf(x,y){for(let s=1;s<=4;s++){const P=COOP_PLOTS[s];if(x>=P.x0&&x<=P.x1&&y>=P.y0&&y<=P.y1)return s;}return 0;}
@@ -75,9 +110,9 @@ function newDay(passed,reason,hosp){
  newDay0(passed,reason,hosp);
  if(COOP.on&&COOP.role==='host'){coopSpawnPlotWeeds();CoopNet.send({type:'newday',world:coopPackWorld()});coopSaveMap();}}
 /* --- vào/ra phòng --- */
-function coopAddPeer(p){const slot=p.slot|0;if(slot===COOP.slot||slot<0||slot>4)return;/* NEW: Tránh trùng peer cùng tên ở slot này */if(COOP.peers[slot]&&COOP.peers[slot].name===coopName(p.name))return;COOP.peers[slot]={slot,name:coopName(p.name),look:peerLook(p.look),house:['ruong','san'].includes(p.house)?p.house:'cap4',map:null,rp:null,tgt:null};if(slot>0)coopHouse(slot,true);}
-function coopRemovePeer(slot){const p=COOP.peers[slot];delete COOP.peers[slot];delete S.coopSlots[slot];/* NEW: clean up conn nếu có */if(COOP.conns[slot]){try{COOP.conns[slot].close();}catch(e){}}COOP.conns[slot]=null;if(slot>0)coopHouse(slot,false);}
-const coopCount=()=>1+Object.keys(COOP.conns).filter(s=>COOP.conns[s]&&COOP.conns[s].open).length;
+function coopAddPeer(p){const slot=p.slot|0;if(slot===COOP.slot||slot<0||slot>4)return;COOP.peers[slot]={slot,name:coopName(p.name),look:peerLook(p.look),house:['ruong','san'].includes(p.house)?p.house:'cap4',map:null,rp:null,tgt:null};if(slot>0)coopHouse(slot,true);}
+function coopRemovePeer(slot){delete COOP.peers[slot];if(slot>0)coopHouse(slot,false);}
+const coopCount=()=>1+Object.keys(COOP.peers).filter(s=>+s!==COOP.slot||COOP.role==='host').length;
 function coopStartGuest(m){if(COOP.joinTimer){clearTimeout(COOP.joinTimer);COOP.joinTimer=null;}
  COOP.slot=m.slot|0;S.soilSolo=S.soil;S.objsSolo=S.objs;COOP.on=true;COOP.peers={};coopEnsureHouses();
  for(const p of (m.roster||[]))coopAddPeer(p);coopHouse(COOP.slot,true);coopApplyWorld(m.world||{});MINE=null;S.map='farm';syncZone();placeAtHome();$('#loc').classList.add('hidden');
@@ -111,43 +146,70 @@ const CoopNet={
   conn.on('close',()=>{if(slot!==null&&COOP.conns[slot]===conn)CoopNet.dropSlot(slot);});
   conn.on('error',()=>{});},
  assignSlot(conn,m){const name=coopName(m.name);S.coopSlots=S.coopSlots||{};
-  /* NEW: Kiểm tra xem tên này đã có trong phòng chưa (trong mọi slots) */
-  const nameTaken=()=>Object.values(COOP.peers).some(p=>p.name===name);
-  /* NEW: Kiểm tra xem slot này đang có connection mở không */
-  const used=s=>!!(COOP.conns[s]&&COOP.conns[s].open);
-  /* NEW: Kiểm tra peer tên này đã tồn tại ở slot này chưa */
-  const hasPeer=s=>COOP.peers[s]&&COOP.peers[s].name===name;
-  let slot=0;
-  /* NEW: Nếu tên đã có trong phòng → không gán slot mới, báo người chơi đã ở phòng */
-  if(nameTaken()){try{conn.send({type:'full'});}catch(e){}setTimeout(()=>conn.close(),300);return null;}
-  /* NEW: Ưu tiên slot cũ nếu tên khớp và slot rỗng (rejoin case) */
-  for(let s=1;s<=4&&!slot;s++) 
-    if(!used(s)&&!hasPeer(s)) slot=s;
-  /* NEW: Slot mới cho tên chưa từng có */
-  for(let s=1;s<=4&&!slot;s++) 
-    if(!used(s)&&!S.coopSlots[s]) slot=s;
-  /* NEW: Slot rỗng nhất */
-  for(let s=1;s<=4&&!slot;s++) 
-    if(!used(s)) slot=s;
+  const used=s=>!!(COOP.conns[s]&&COOP.conns[s].open);let slot=0;
+
+
+  for(let s=1;s<=4&&!slot;s++){
+
+ const info=S.coopSlots[s];
+
+ if(
+  !used(s) &&
+  info &&
+  info.pid===m.pid
+ ){
+  slot=s;
+ }
+
+}
+
+
+  for(let s=1;s<=4&&!slot;s++)if(!used(s)&&!S.coopSlots[s])slot=s;
+  for(let s=1;s<=4&&!slot;s++)if(!used(s))slot=s;
   if(!slot){try{conn.send({type:'full'});}catch(e){}setTimeout(()=>conn.close(),300);return null;}
-  S.coopSlots[slot]=name;COOP.conns[slot]=conn;
-  /* NEW: Chỉ gọi coopAddPeer nếu chưa có peer ở slot này */
-  if(!COOP.peers[slot])coopAddPeer({slot,name,look:m.look,house:m.house});else{
-    /* Cập nhật peer cũ với dữ liệu mới */
-    COOP.peers[slot]={slot,name:coopName(m.name),look:m.look,house:m.house,map:null,rp:null,tgt:null};
-  }
-  coopInitPlot(slot);
+
+  S.coopSlots[slot]={
+ pid:m.pid,
+ name:name,
+ lastSeen:Date.now()
+};
+	
+
+COOP.conns[slot]=conn;
+
+  coopAddPeer({slot,name,look:m.look,house:m.house});
+	if(COOP.peers[slot]){
+ COOP.peers[slot].lastSeen=Date.now();
+}
+
+
+
+
+coopInitPlot(slot);
   const roster=[{slot:0,name:S.name,look:compactLook(),house:S.house}].concat(Object.keys(COOP.peers).map(s=>COOP.peers[s]).filter(p=>p.slot>0).map(p=>({slot:p.slot,name:p.name,look:compactFromPeer(p),house:p.house})));
   try{conn.send({type:'snapshot',slot,world:coopPackWorld(),roster});}catch(e){}
   coopSendAll({type:'join',p:{slot,name,look:m.look,house:m.house}},slot);
   coopSaveMap();CoopNet.setStatus('connected');toast(`🤝 ${name} đã vào phòng (${CoopNet.count()}/${COOP_MAX}). Nhà bạn ấy ở khu vườn số ${slot}.`);save();return slot;},
  dropSlot(slot){const p=COOP.peers[slot];delete COOP.conns[slot];coopRemovePeer(slot);coopSendAll({type:'leave',slot});coopSaveMap();CoopNet.ui();toast(`${p?p.name:'Một người chơi'} đã rời phòng (${CoopNet.count()}/${COOP_MAX}).`);},
- count(){return 1+Object.keys(COOP.conns).filter(s=>COOP.conns[s]&&COOP.conns[s].open).length;},
+ count(){return 1+Object.keys(COOP.peers).filter(s=>+s>0||COOP.role==='guest').length;},
  joinRoom(code){const P=coopPeerCtor();code=String(code||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');if(!P){CoopNet.setStatus('error','Chưa tải được thư viện PeerJS.');return;}if(code.length<4){CoopNet.setStatus('error','Hãy nhập mã phòng của Host.');return;}
   coopTeardown();COOP.role='guest';CoopNet.setStatus('joining');
   const peer=new P(coopPeerOpts());COOP.peer=peer;
   peer.on('open',()=>{const conn=peer.connect(COOP_PREFIX+code,{reliable:true});COOP.conn=conn;
-   conn.on('open',()=>CoopNet.send({type:'hello',name:S.name,look:compactLook(),house:S.house}));
+
+
+
+   conn.on('open',()=>CoopNet.send({
+ type:'hello',
+ pid:coopPlayerId(),
+ name:S.name,
+ look:compactLook(),
+ house:S.house
+}));
+
+
+
+
    conn.on('data',coopGuestHandle);
    conn.on('close',()=>{if(COOP.conn===conn){const was=COOP.on;coopTeardown(was?'Mất kết nối với Host. Bạn quay về nông trại của mình.':'');CoopNet.ui();}});
    conn.on('error',e=>CoopNet.fail(coopErr(e)));});
@@ -158,26 +220,120 @@ const CoopNet={
  tick(dt){
   for(const s in COOP.peers){const P=COOP.peers[s];if(P.rp&&P.tgt){const k=Math.min(1,dt*12);P.rp.x+=(P.tgt.x-P.rp.x)*k;P.rp.y+=(P.tgt.y-P.rp.y)*k;if(P.tgt.mv)P.rp.a+=dt*8;}}
   if(!COOP.on)return;
+
+
+
+
   if(COOP.role==='guest'&&!(COOP.conn&&COOP.conn.open))return;
+	COOP.pingT-=dt;
+
+if(COOP.pingT<=0){
+
+ COOP.pingT=5;
+
+ CoopNet.send({
+  type:'ping'
+ });
+
+}
+
+
+
   COOP.posT-=dt;if(COOP.posT<=0){COOP.posT=.1;const m={type:'pos',s:COOP.slot,m:S.map,x:Math.round(player.x),y:Math.round(player.y),d:player.dir,mv:player.mov?1:0},key=m.m+m.x+','+m.y+m.d+m.mv;if(key!==COOP.lastPos||Math.random()<.05){COOP.lastPos=key;CoopNet.send(m);}}
-  if(COOP.role==='host'){COOP.clockT-=dt;if(COOP.clockT<=0){COOP.clockT=3;CoopNet.send({type:'clock',time:S.time,day:S.day,season:S.season,year:S.year,rain:S.rain});}
-   if(COOP.saveT>0){COOP.saveT-=dt;if(COOP.saveT<=0)coopSaveMap();}}}
+
+
+
+  if(COOP.role==='host'){
+
+    // AUTO KICK PLAYER TREO
+    const now=Date.now();
+
+    for(const s in COOP.peers){
+
+        const slot=+s;
+
+        if(slot===0) continue;
+
+        const p=COOP.peers[slot];
+
+        if(
+            p &&
+            p.lastSeen &&
+            now-p.lastSeen>15000
+        ){
+
+            console.log(
+                '[COOP] timeout',
+                p.name
+            );
+
+            const c=COOP.conns[slot];
+
+            CoopNet.dropSlot(slot);
+
+            try{
+                c&&c.close();
+            }catch(e){}
+
+        }
+
+    }
+
+    // CLOCK CŨ
+    COOP.clockT-=dt;
+
+    if(COOP.clockT<=0){
+        COOP.clockT=3;
+
+        CoopNet.send({
+            type:'clock',
+            time:S.time,
+            day:S.day,
+            season:S.season,
+            year:S.year,
+            rain:S.rain
+        });
+    }
+
+    // SAVE CŨ
+    if(COOP.saveT>0){
+        COOP.saveT-=dt;
+
+        if(COOP.saveT<=0)
+            coopSaveMap();
+    }
+
+}
+ 
+
+
+
+  if(COOP.saveT>0){COOP.saveT-=dt;if(COOP.saveT<=0)coopSaveMap();}}}
 };
 function compactFromPeer(p){const L=p.look||{};return {k:L.skin,h:L.hair,s:L.shirt,p:L.pants,lg:L.long?1:0,ht:L.hat?1:0,dr:L.dress?1:0,tr:L.trim||'',hg:L.hatGold?1:0};}
 function coopHostHandle(m,slot){
  switch(m.type){
+
+
+  case 'ping':
+
+ if(COOP.peers[slot]){
+  COOP.peers[slot].lastSeen=Date.now();
+ }
+
+ break;
+
+
   case 'pos':m.s=slot;coopRecvPos(m);coopSendAll(m,slot);break;
   case 'act':m.s=slot;coopRecvAct(m);coopSendAll(m,slot);break;
   case 'sleepreq':{const p=COOP.peers[slot];toast(`🌙 ${p?p.name:'Một người chơi'} muốn đi ngủ. Bạn ngủ ở nhà thì cả phòng sang ngày mới.`);break;}
   case 'bye':{const c=COOP.conns[slot];CoopNet.dropSlot(slot);try{c&&c.close();}catch(e){}break;}
-   case 'kick':{const p=COOP.peers[slot];if(p){coopRemovePeer(slot);CoopNet.setStatus('connected');toast(`👢 ${p.name} đã bị kick khỏi phòng.`);}break;}
  }}
 function coopGuestHandle(m){if(!m||typeof m!=='object')return;
  switch(m.type){
   case 'snapshot':if(!COOP.on)coopStartGuest(m);break;
   case 'join':if(COOP.on&&m.p){coopAddPeer(m.p);toast(`🤝 ${coopName(m.p.name)} đã vào phòng.`);CoopNet.ui();}break;
   case 'leave':if(COOP.on){const p=COOP.peers[m.slot|0];coopRemovePeer(m.slot|0);toast(`${p?p.name:'Một người chơi'} đã rời phòng.`);CoopNet.ui();}break;
-   case 'kick':if(COOP.on){const p=COOP.peers[m.slot|0];if(p){coopRemovePeer(m.slot|0);toast(`👢 Bạn đã被 kick khỏi phòng.`);CoopNet.ui();}}break;
   case 'pos':if(COOP.on)coopRecvPos(m);break;
   case 'act':if(COOP.on)coopRecvAct(m);break;
   case 'clock':if(COOP.on)coopRecvClock(m);break;
