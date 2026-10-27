@@ -1,0 +1,23 @@
+# Hệ thống / Hệ điều hành
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Trình soạn thảo / IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Nhật ký và bộ nhớ đệm
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Tệp tạm
+*.tmp
+*.bak
