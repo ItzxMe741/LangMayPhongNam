@@ -172,6 +172,7 @@ body.touch #goal{font-size:11px}
     </div>
     <div id="loc" class="panel hidden"></div>
     <div id="topbtns">
+      <button class="btn" id="b-export" title="Tải bản lưu về máy (.json)" aria-label="Tải bản lưu">💾</button>
       <button class="btn" id="b-pass" title="Sổ Tay Mùa Lễ Hội" aria-label="Sổ Tay Mùa Lễ Hội">📜</button>
       <button class="btn" id="b-coop" title="Co-op: chơi cùng bạn bè" aria-label="Co-op">🤝</button>
       <button class="btn" id="b-quest" title="Sổ Nhiệm Vụ (L)" aria-label="Sổ Nhiệm Vụ">📖</button>
@@ -213,6 +214,8 @@ body.touch #goal{font-size:11px}
       <div id="t-main" class="tbtns">
         <button class="btn red" id="t-new">Bắt đầu hành trình mới</button>
         <button class="btn" id="t-cont">Chơi tiếp</button>
+        <button class="btn" id="t-import">📂 Nạp file lưu (.json)</button>
+        <input type="file" id="t-file-input" accept=".json" style="display:none">
         <button class="btn hidden" id="t-cloud">☁ Tải bản lưu đám mây</button>
       </div>
       <div id="t-create" class="hidden">
@@ -4025,7 +4028,18 @@ const COOP_MAX=5,COOP_PREFIX='phongnam-',COOP_CHARS='ABCDEFGHJKMNPQRSTUVWXYZ2345
 const COOP_PLOTS=[null,{x0:44,x1:60,y0:41,y1:51,hx:46,hy:41},{x0:61,x1:76,y0:41,y1:51,hx:63,hy:41},{x0:44,x1:64,y0:3,y1:13,hx:46,hy:3},{x0:44,x1:64,y0:15,y1:25,hx:46,hy:15}];
 const COOP={on:false,role:null,slot:-1,peer:null,conn:null,conns:{},peers:{},code:'',status:'idle',msg:'',inVal:'',lastPos:'',posT:0,clockT:0,saveT:0,fromHost:false,joinTimer:null};
 const coopPeerCtor=()=>(typeof window!=='undefined'&&(window.Peer||(window.peerjs&&window.peerjs.Peer)))||null;
-const coopPeerOpts=()=>window.PN_PEER_OPTS||undefined;
+const coopPeerOpts=()=>window.PN_PEER_OPTS||{
+ config:{
+  iceServers:[
+   {urls:'stun:stun.l.google.com:19302'},
+   {urls:'stun:stun1.l.google.com:19302'},
+   {urls:'stun:stun2.l.google.com:19302'},
+   {urls:'stun:stun3.l.google.com:19302'},
+   {urls:'stun:stun4.l.google.com:19302'},
+   {urls:'stun:stun.cloudflare.com:3478'}
+  ]
+ }
+};
 /* --- sở hữu đất --- */
 const inHostFields=(x,y)=>(x>=3&&x<=37&&y>=42&&y<=77)||(x>=3&&x<=29&&y>=12&&y<=37);
 function coopPlotOf(x,y){for(let s=1;s<=4;s++){const P=COOP_PLOTS[s];if(x>=P.x0&&x<=P.x1&&y>=P.y0&&y<=P.y1)return s;}return 0;}
@@ -4234,6 +4248,73 @@ cv.addEventListener('pointerdown',e=>{
 addEventListener('pointerup',()=>{actionHeld=false;});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 cv.addEventListener('wheel',e=>{if(paused())return;e.preventDefault();selectSlot((S.sel+(e.deltaY>0?1:-1)+8)%8);},{passive:false});
+function exportSaveFile(){
+ try{
+  save();
+  if(typeof coopSaveMap==='function')coopSaveMap();
+  const rawSave=localStorage.getItem(KEY);
+  if(!rawSave){toast('Chưa có dữ liệu bản lưu để tải về.');return;}
+  const rawCoop=localStorage.getItem(COOP_KEY);
+  const bundle={
+   version:'phongnam_v1',
+   exportedAt:Date.now(),
+   save:JSON.parse(rawSave),
+   coopMap:rawCoop?JSON.parse(rawCoop):null
+  };
+  const jsonStr=JSON.stringify(bundle,null,2);
+  const blob=new Blob([jsonStr],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const d=S?`ngay${S.day}_mua${S.season+1}_${S.name||'Na'}`:'save';
+  a.href=url;
+  a.download=`phongnam_${d}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('💾 Đã tải file lưu về máy tính!');
+ }catch(err){
+  toast('Lỗi khi tải bản lưu: '+err.message);
+ }
+}
+
+function importSaveFile(file){
+ if(!file)return;
+ const reader=new FileReader();
+ reader.onload=e=>{
+  try{
+   const text=e.target.result;
+   const parsed=JSON.parse(text);
+   let gameData=null,coopData=null;
+   if(parsed&&parsed.version&&parsed.save){
+    gameData=parsed.save;
+    coopData=parsed.coopMap;
+   }else if(parsed&&parsed.look&&parsed.name){
+    gameData=parsed;
+   }
+   if(!gameData||!gameData.look||!gameData.name){
+    throw new Error('Định dạng tệp không hợp lệ.');
+   }
+   localStorage.setItem(KEY,JSON.stringify(gameData));
+   if(coopData){
+    localStorage.setItem(COOP_KEY,JSON.stringify(coopData));
+   }
+   toast('📂 Nạp file lưu thành công!');
+   S=Object.assign(newState(gameData.name,gameData.look),gameData);
+   migrate();
+   startGame(false);
+  }catch(err){
+   alert('Không thể đọc file lưu này: '+err.message);
+  }
+ };
+ reader.readAsText(file);
+}
+
+if(navigator.storage&&navigator.storage.persist){
+ navigator.storage.persist().catch(()=>{});
+}
+
+$('#b-export').onclick=()=>{if(!paused())exportSaveFile();};
 $('#b-pass').onclick=()=>{if(!paused()&&!RACE)openMenu('pass');};
 $('#b-bag').onclick=()=>{if(!paused()&&!RACE)openMenu('bag');};
 $('#b-coop').onclick=()=>{if(!paused()&&!RACE&&!DEF&&!WEAVE)openMenu('coop');};
@@ -4271,6 +4352,13 @@ $('#t-hat').addEventListener('click',e=>{const b=e.target.closest('button');if(!
 $('#t-new').onclick=()=>{sfx('ui');$('#t-main').classList.add('hidden');$('#t-create').classList.remove('hidden');renderCreate();$('#t-name').focus();};
 $('#t-back').onclick=()=>{$('#t-create').classList.add('hidden');$('#t-main').classList.remove('hidden');};
 $('#t-cont').onclick=()=>{const s=loadSave();if(!s)return;S=s;migrate();startGame(false);};
+$('#t-import').onclick=()=>$('#t-file-input').click();
+$('#t-file-input').onchange=e=>{
+ if(e.target.files&&e.target.files[0]){
+  importSaveFile(e.target.files[0]);
+  e.target.value='';
+ }
+};
 $('#t-go').onclick=()=>{const name=($('#t-name').value||'').trim().slice(0,12)||'Na';S=newState(name,lookFrom(),OUTFITS[pick_.outfit].id);S.zv=1;S.qm=1;spawnLotus();startGame(true);};
 function phase2Lines(){const bat=NPCMAP.bat,w='Cụ Bát · Trưởng Làng';return [
  {who:w,look:bat.look,text:'Tin vui cho làng! Từ khi cháu về, bà con xa quê cũng lục tục trở lại: Chú Sáu thợ mộc, Ông Tư chài lưới, Cô Ba Thắm thợ may và thằng Bé Tí nhà bên. Ghé chào họ nhé.'},

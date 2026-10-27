@@ -27,28 +27,74 @@
 
 ---
 
-## 🚀 Hướng dẫn chơi & Trải nghiệm
+## 🚀 Hướng dẫn tải mã nguồn về máy
 
-1. Tải hoặc sao chép mã nguồn về máy.
-2. Mở trực tiếp file `lang-may-phong-nam-ban-day-du.html` bằng trình duyệt web bất kỳ.
-3. Tạo nhân vật (chọn kiểu tóc, nón lá, trang phục) và bắt đầu hành trình hồi sinh Làng Phong Nam!
+### Cách 1: Tải nhanh file ZIP (Dành cho người chỉ muốn chơi thử)
+1. Bấm vào nút màu xanh lá cây **`<> Code`** ở góc trên bên phải trang GitHub.
+2. Chọn **Download ZIP**.
+3. Giải nén tệp vừa tải và mở trực tiếp file `index.html` (hoặc `lang-may-phong-nam-ban-day-du.html`) bằng trình duyệt để chơi ngay.
 
 ---
 
-## 👥 Hướng dẫn cộng tác & Đóng góp qua Git
-
-### Khởi tạo và đẩy lên GitHub:
+### Cách 2: Tải bằng Git (Dành cho lập trình viên cùng phát triển)
+Mở cửa sổ dòng lệnh (PowerShell / Terminal) và chạy lệnh:
 ```bash
-git init
-git branch -M main
-git add .
-git commit -m "feat: Khởi tạo dự án Làng Mây Phong Nam"
-git remote add origin https://github.com/<tai-khoan>/<ten-repo>.git
-git push -u origin main
+# Tải toàn bộ source code về máy
+git clone https://github.com/ItzxMe741/LangMayPhongNam.git
+
+# Đi vào thư mục dự án
+cd LangMayPhongNam
 ```
 
-### Quy trình làm việc nhóm (Branching & Pull Request):
-1. **Clone dự án**: `git clone <url-repo>`
-2. **Tạo nhánh tính năng**: `git checkout -b feature/ten-tinh-nang`
-3. **Commit & Push**: `git commit -m "feat: mô tả thay đổi"` và `git push origin feature/ten-tinh-nang`
-4. **Tạo Pull Request** trên GitHub để cùng review và thảo luận trước khi hợp nhất vào `main`.
+---
+
+## 🔄 Cách cập nhật (Kéo) code mới nhất về máy
+
+Khi đồng đội đã đẩy tính năng mới lên GitHub hoặc sau khi đã gộp (merge) code vào nhánh `main`, bạn chỉ cần chạy lệnh sau trên máy tính để cập nhật code mới nhất về:
+
+```bash
+# 1. Chuyển về nhánh chính
+git checkout main
+
+# 2. Kéo code mới nhất từ GitHub về máy tính
+git pull origin main
+```
+
+> 💡 **Nếu bạn muốn kéo và kiểm tra nhánh của người khác**:
+> ```bash
+> git fetch origin
+> git checkout <ten-nhanh-cua-dong-doi>
+> ```
+
+---
+
+## 💾 Hướng dẫn Sao lưu & Khôi phục dữ liệu game (Chống mất Save)
+
+Để đảm bảo không bao giờ bị mất tiến trình chơi khi dọn dẹp trình duyệt hoặc xóa lịch sử / cache:
+
+- **📥 Tải bản lưu về máy tính (Xuất file .json)**: Khi đang chơi game, bấm vào biểu tượng chiếc đĩa mềm **💾** ở thanh công cụ phía trên bên phải màn hình. Trình duyệt sẽ tải ngay một file `.json` về thư mục **Downloads** trên máy tính bạn.
+- **📤 Khôi phục bản lưu (Nạp file .json)**: Ở màn hình Menu chính của game, bấm nút **📂 Nạp file lưu (.json)** và chọn file đã tải trước đó. Game sẽ khôi phục 100% dữ liệu nông trại, túi đồ và cấp độ ngay lập tức.
+
+---
+
+## 🌐 Hướng dẫn chơi Co-op khi khác mạng (Qua GitHub Pages)
+
+- Game hỗ trợ chơi Co-op tối đa **5 người** (1 Host + 4 Guest) xuyên mạng Internet (khác Wi-Fi, 4G/5G) nhờ tích hợp hệ thống máy chủ STUN của Google & Cloudflare.
+- **Link chơi trực tuyến**: `https://itzxme741.github.io/LangMayPhongNam/`
+- **Cách vào phòng**:
+  1. Người làm **Host**: Bấm nút **🤝 Co-op** > chọn **Tạo Phòng** > gửi mã phòng cho bạn bè.
+  2. Người làm **Guest**: Bấm nút **🤝 Co-op** > nhập mã phòng > bấm **Vào Phòng**.
+
+---
+
+## 👥 Hướng dẫn quy trình làm việc nhóm (Branching & Pull Request)
+
+1. **Cập nhật code mới nhất**: Luôn chạy `git pull origin main` trước khi làm việc mới.
+2. **Tạo nhánh tính năng riêng**: `git checkout -b feature/ten-tinh-nang`
+3. **Lưu thay đổi & Đẩy nhánh lên GitHub**:
+   ```bash
+   git add .
+   git commit -m "feat: mô tả thay đổi bạn vừa làm"
+   git push origin feature/ten-tinh-nang
+   ```
+4. **Tạo Pull Request**: Vào trang GitHub, bấm nút **Compare & pull request** để người quản lý dự án kiểm tra và duyệt gộp vào `main`.
