@@ -27,44 +27,47 @@
 
 ---
 
-## 🚀 Hướng dẫn tải mã nguồn về máy
+## 📥 HƯỚNG DẪN KÉO CODE VỀ MÁY TÍNH (CHO MỌI THÀNH VIÊN)
 
-### Cách 1: Tải nhanh file ZIP (Dành cho người chỉ muốn chơi thử)
-1. Bấm vào nút màu xanh lá cây **`<> Code`** ở góc trên bên phải trang GitHub.
-2. Chọn **Download ZIP**.
-3. Giải nén tệp vừa tải và mở trực tiếp file `index.html` (hoặc `lang-may-phong-nam-ban-day-du.html`) bằng trình duyệt để chơi ngay.
+Tùy vào tình huống của bạn, hãy chọn cách kéo code phù hợp bên dưới:
 
----
-
-### Cách 2: Tải bằng Git (Dành cho lập trình viên cùng phát triển)
-Mở cửa sổ dòng lệnh (PowerShell / Terminal) và chạy lệnh:
+### 1. Kéo bản cập nhật mới nhất về máy (Đã có sẵn thư mục code trên máy)
+Mỗi khi có ai đó vừa gộp (merge) tính năng mới trên GitHub, bạn mở PowerShell tại thư mục dự án và chạy:
 ```bash
-# Tải toàn bộ source code về máy
-git clone https://github.com/ItzxMe741/LangMayPhongNam.git
-
-# Đi vào thư mục dự án
-cd LangMayPhongNam
-```
-
----
-
-## 🔄 Cách cập nhật (Kéo) code mới nhất về máy
-
-Khi đồng đội đã đẩy tính năng mới lên GitHub hoặc sau khi đã gộp (merge) code vào nhánh `main`, bạn chỉ cần chạy lệnh sau trên máy tính để cập nhật code mới nhất về:
-
-```bash
-# 1. Chuyển về nhánh chính
+# Chuyển sang nhánh chính
 git checkout main
 
-# 2. Kéo code mới nhất từ GitHub về máy tính
+# Kéo code mới nhất từ GitHub về máy tính
 git pull origin main
 ```
 
-> 💡 **Nếu bạn muốn kéo và kiểm tra nhánh của người khác**:
-> ```bash
-> git fetch origin
-> git checkout <ten-nhanh-cua-dong-doi>
-> ```
+---
+
+### 2. Tải toàn bộ dự án về máy mới tinh (Lần đầu tham gia dự án)
+- **Cách A - Dùng Git (Khuyên dùng)**:
+  ```bash
+  git clone https://github.com/ItzxMe741/LangMayPhongNam.git
+  cd LangMayPhongNam
+  ```
+- **Cách B - Tải file ZIP (Không cần cài Git)**:
+  Bấm vào nút màu xanh **`<> Code`** ở góc trên bên phải trang GitHub > Chọn **Download ZIP** > Giải nén ra là chơi được ngay.
+
+---
+
+### 3. Kéo nhánh tính năng của đồng đội về máy để chạy thử
+Nếu đồng đội vừa đẩy lên một nhánh mới (ví dụ: `feature/them-npc`) và bạn muốn kéo về máy để test:
+```bash
+# Cập nhật danh sách các nhánh từ GitHub
+git fetch origin
+
+# Chuyển sang nhánh của đồng đội
+git checkout feature/them-npc
+```
+
+---
+
+### 4. Dùng chuột trên GitHub Desktop (Không cần gõ lệnh)
+- Mở ứng dụng **GitHub Desktop** > Bấm nút **Fetch origin** (hoặc **Pull origin**) ở góc trên bên phải màn hình là code mới tự động kéo về máy!
 
 ---
 
