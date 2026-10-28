@@ -249,44 +249,28 @@ body.touch #goal{font-size:11px}
     <div class="tcard panel">
       <h1>Làng Mây<br>Phong Nam<small>Bản đầy đủ · Năm Hồi</small></h1>
       <p class="tsub">Năm hồi cốt truyện từ nông trại hoang tới Sài Gòn Mây, Cõi Âm Đô và ba kết cục. Phong Nam đang hồi sinh.</p>
-      <div id="t-mode-tabs" style="display:flex;gap:6px;margin:12px 0 16px;justify-content:center">
-        <button class="btn on" id="t-tab-solo" type="button" style="flex:1;padding:8px 6px">🧑‍🌾 Chơi Cá Nhân</button>
-        <button class="btn" id="t-tab-online" type="button" style="flex:1;padding:8px 6px">🌐 Chơi Trực Tuyến</button>
+      <div id="t-main" class="tbtns">
+        <button class="btn red" id="t-cont">Chơi tiếp nông trại</button>
+        <button class="btn" id="t-new">Bắt đầu nông trại mới</button>
+        <button class="btn" id="t-join-btn">🔑 Vào phòng bạn bè (Co-op)</button>
+        <button class="btn" id="t-import">📂 Nạp file lưu (.json)</button>
+        <input type="file" id="t-file-input" accept=".json" style="display:none">
+        <button class="btn hidden" id="t-cloud">☁ Tải bản lưu đám mây</button>
       </div>
 
-      <!-- TAB 1: CHƠI CÁ NHÂN -->
-      <div id="t-sec-solo">
-        <div id="t-main" class="tbtns">
-          <button class="btn red" id="t-new">Bắt đầu nông trại mới</button>
-          <button class="btn" id="t-cont">Tiếp tục nông trại cá nhân</button>
-          <button class="btn" id="t-import">📂 Nạp file lưu (.json)</button>
-          <input type="file" id="t-file-input" accept=".json" style="display:none">
-          <button class="btn hidden" id="t-cloud">☁ Tải bản lưu đám mây</button>
+      <!-- KHUNG VÀO PHÒNG BẠN BÈ (GUEST) TỪ MENU CHÍNH -->
+      <div id="t-join-box" class="hidden" style="background:var(--chip);border:2px solid var(--lacquer);border-radius:8px;padding:12px;margin-top:12px;text-align:left">
+        <div style="font-weight:900;font-size:14px;color:var(--leaf);margin-bottom:4px">🔑 Vào Nông Trại Bạn Bè</div>
+        <div style="font-size:12px;color:var(--ink2);margin-bottom:8px">Nhập mã phòng và mật khẩu do bạn bè (Host) gửi cho bạn:</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <input id="t-join-code" maxlength="8" placeholder="Mã phòng" autocomplete="off" style="flex:1;font:800 13px 'Be Vietnam Pro',sans-serif;padding:6px;text-transform:uppercase;text-align:center;border:2px solid var(--lacquer);border-radius:6px;background:var(--paper);color:var(--ink)">
+          <input id="t-join-pass" type="password" maxlength="16" placeholder="Mật khẩu" autocomplete="off" style="flex:1;font:800 13px 'Be Vietnam Pro',sans-serif;padding:6px;border:2px solid var(--lacquer);border-radius:6px;background:var(--paper);color:var(--ink)">
         </div>
-      </div>
-
-      <!-- TAB 2: CHƠI TRỰC TUYẾN -->
-      <div id="t-sec-online" class="hidden">
-        <div style="background:var(--chip);border:2px solid var(--lacquer);border-radius:8px;padding:12px;margin-bottom:12px;text-align:left">
-          <div style="font-weight:900;font-size:14px;color:var(--tile);margin-bottom:4px">🏠 Tạo Phòng Mới (Host)</div>
-          <div style="font-size:12px;color:var(--ink2);margin-bottom:8px">Bản đồ nông trại lưu tại máy bạn. Tối đa 6 người cùng chơi.</div>
-          <div style="display:flex;gap:6px;margin-bottom:8px">
-            <input id="t-host-code" maxlength="8" placeholder="Mã phòng (tùy chọn)" autocomplete="off" style="flex:1;font:800 13px 'Be Vietnam Pro',sans-serif;padding:6px;text-transform:uppercase;border:2px solid var(--lacquer);border-radius:6px;background:var(--paper);color:var(--ink)">
-            <input id="t-host-pass" type="password" maxlength="16" placeholder="Mật khẩu phòng (tùy chọn)" autocomplete="off" style="flex:1;font:800 13px 'Be Vietnam Pro',sans-serif;padding:6px;border:2px solid var(--lacquer);border-radius:6px;background:var(--paper);color:var(--ink)">
-          </div>
-          <button class="btn red" id="t-btn-host" type="button" style="width:100%">Tạo Phòng & Vào Chơi</button>
+        <div style="display:flex;gap:6px">
+          <button class="btn red sm" id="t-join-submit" type="button" style="flex:1">Vào Chơi</button>
+          <button class="btn sm" id="t-join-cancel" type="button">Quay lại</button>
         </div>
-
-        <div style="background:var(--chip);border:2px solid var(--lacquer);border-radius:8px;padding:12px;text-align:left">
-          <div style="font-weight:900;font-size:14px;color:var(--leaf);margin-bottom:4px">🔑 Vào Phòng Có Sẵn (Guest)</div>
-          <div style="font-size:12px;color:var(--ink2);margin-bottom:8px">Nhập mã phòng và mật khẩu của Host. Đồ đạc của bạn sẽ được lưu riêng.</div>
-          <div style="display:flex;gap:6px;margin-bottom:8px">
-            <input id="t-join-code" maxlength="8" placeholder="Mã phòng" autocomplete="off" style="flex:1;font:800 13px 'Be Vietnam Pro',sans-serif;padding:6px;text-transform:uppercase;text-align:center;border:2px solid var(--lacquer);border-radius:6px;background:var(--paper);color:var(--ink)">
-            <input id="t-join-pass" type="password" maxlength="16" placeholder="Mật khẩu phòng" autocomplete="off" style="flex:1;font:800 13px 'Be Vietnam Pro',sans-serif;padding:6px;border:2px solid var(--lacquer);border-radius:6px;background:var(--paper);color:var(--ink)">
-          </div>
-          <button class="btn" id="t-btn-join" type="button" style="width:100%">Vào Phòng Chơi Chung</button>
-        </div>
-        <div id="t-online-msg" style="margin-top:8px;font-size:13px;font-weight:700;color:var(--tile);min-height:18px"></div>
+        <div id="t-online-msg" style="margin-top:6px;font-size:12px;font-weight:700;color:var(--tile);min-height:16px"></div>
       </div>
       <div id="t-create" class="hidden">
         <label class="field" for="t-name">Tên của bạn</label>
@@ -5091,27 +5075,16 @@ function startGame(isNew){
 }
 
 
-// TABS TITLE SCREEN
-const tabSolo=$('#t-tab-solo'),tabOnline=$('#t-tab-online'),secSolo=$('#t-sec-solo'),secOnline=$('#t-sec-online');
-if(tabSolo&&tabOnline){
- tabSolo.onclick=()=>{tabSolo.classList.add('on');tabOnline.classList.remove('on');secSolo.classList.remove('hidden');secOnline.classList.add('hidden');sfx('ui');};
- tabOnline.onclick=()=>{tabOnline.classList.add('on');tabSolo.classList.remove('on');secOnline.classList.remove('hidden');secSolo.classList.add('hidden');sfx('ui');};
-}
-const btnHostOnline=$('#t-btn-host'),btnJoinOnline=$('#t-btn-join');
-if(btnHostOnline){
- btnHostOnline.onclick=()=>{
-  const code=($('#t-host-code').value||'').trim().toUpperCase(),pass=($('#t-host-pass').value||'').trim();
-  const s=loadSave();if(s){S=s;migrate();}else{S=newState('Chủ Trại',lookFrom());S.zv=1;S.qm=1;spawnLotus();}
-  startGame(false);
-  setTimeout(()=>CoopNet.createRoom(code,pass),400);
- };
-}
-if(btnJoinOnline){
- btnJoinOnline.onclick=()=>{
+// VÀO PHÒNG BẠN BÈ TỪ MENU CHÍNH
+const joinBtn=$('#t-join-btn'),joinBox=$('#t-join-box'),joinCancel=$('#t-join-cancel'),joinSubmit=$('#t-join-submit'),tMainSec=$('#t-main');
+if(joinBtn&&joinBox){
+ joinBtn.onclick=()=>{sfx('ui');tMainSec.classList.add('hidden');joinBox.classList.remove('hidden');$('#t-join-code').focus();};
+ joinCancel.onclick=()=>{sfx('ui');joinBox.classList.add('hidden');tMainSec.classList.remove('hidden');};
+ joinSubmit.onclick=()=>{
   const code=($('#t-join-code').value||'').trim().toUpperCase(),pass=($('#t-join-pass').value||'').trim(),msg=$('#t-online-msg');
   if(!code||code.length<4){if(msg)msg.textContent='⚠️ Hãy nhập mã phòng của Host (ít nhất 4 ký tự)!';return;}
-  if(!coopPeerCtor()){if(msg)msg.textContent='⚠️ Chưa tải được PeerJS. Hãy kiểm tra kết nối mạng!';return;}
-  if(msg)msg.textContent='⏳ Đang kết nối tới phòng '+code+'...';
+  if(!coopPeerCtor()){if(msg)msg.textContent='⚠️ Chưa tải được thư viện PeerJS. Kiểm tra kết nối Internet!';return;}
+  if(msg)msg.textContent='⏳ Đang kết nối tới nông trại '+code+'...';
   const s=loadSave();if(s){S=s;migrate();}else{S=newState('Khách',lookFrom());S.zv=1;S.qm=1;spawnLotus();}
   startGame(false);
   setTimeout(()=>CoopNet.joinRoom(code,pass),400);
