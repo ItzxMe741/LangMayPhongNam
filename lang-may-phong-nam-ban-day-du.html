@@ -1290,6 +1290,7 @@ function buildWorld(){
   addB({id:'da',n:'Cây Đa Linh Hồn',x:30,y:4,w:7,h:6,solid:[[32,8],[33,8],[34,8],[32,9],[33,9],[34,9]],act:()=>openMenu('da')});
   addB({id:'mieuda',n:'Miếu Thờ Cụ Đa',x:25,y:6,w:3,h:3,sk:'mieu',oy:-8,act:()=>openMenu('mieuda')});
   addB({id:'caucatra',n:'Cầu Cá Tra',x:51,y:59,w:2,h:2,solid:[[51,59],[51,60]],sk:'caucatra',oy:-8,act:cauCaTra});
+  rect(50,59,50,60,1);
   z.exits=[{s:'N',a:38,b:41,to:'north',x:29.5,y:41},{s:'S',a:38,b:41,to:'south',x:29.5,y:2.3},{s:'E',a:38,b:41,to:'east',x:2.3,y:19.5},{s:'W',a:38,b:41,to:'west',x:37.5,y:14.5}];
  });
  mkZone('east',60,44,({set,rect,addB,border,r,z})=>{
@@ -1389,7 +1390,19 @@ let LOC_TO=null;
 function showZoneLabel(){const el=$('#loc');if(!ZNAME[S.map])return;el.textContent='📍 '+ZNAME[S.map];el.classList.remove('hidden');clearTimeout(LOC_TO);LOC_TO=setTimeout(()=>{if(isOut())el.classList.add('hidden');},2600);}
 function isCut(x,y){const v=S.cut&&S.cut[S.map+':'+x+','+y];return v!=null&&dayIdx()-v<3;}
 function chopBamboo(tx,ty){S.cut=S.cut||{};S.cut[S.map+':'+tx+','+ty]=dayIdx();const n=1+(Math.random()<.5?1:0);addItem('go',n);sfx('hit');dust(tx,ty,'#7fae3a');gainXP('nong',1);}
-function cauCaTra(){if(S.flags.cctDay===dayIdx()){toast('Hôm nay bạn ghé Cầu Cá Tra rồi.');return;}S.flags.cctDay=dayIdx();S.energy=Math.min(S.maxE,S.energy+15);sfx('splash');burst(51*T,59*T,['#8fd0f0','#fff'],10);toast('Bạn ghé Cầu Cá Tra: +15 sức. Cá dưới ao được thêm dinh dưỡng, hôm nay câu ở ao nông trại cá cắn nhanh và dễ gặp cá to hơn.');refreshHUD();}
+let CCT_USE=null;
+function cauCaTraAt(tx,ty){return S&&S.map==='farm'&&tx>=51&&tx<=54&&ty>=59&&ty<=61;}
+function nearCauCaTra(){return S&&S.map==='farm'&&Math.hypot(player.x-(51*T-4),player.y-60*T)<=44;}
+function cauCaTra(){
+ if(!nearCauCaTra()){toast('Lại gần bậc cầu ở phía bờ để đi vệ sinh.');return;}
+ if(CCT_USE)return;if(S.flags.cctDay===dayIdx()){toast('Hôm nay bạn đã đi vệ sinh ở đây rồi.');return;}
+ say([{who:'Cầu Cá Tra',text:'Bạn muốn vào chòi đi vệ sinh một lát?',opts:[{t:'Đi vệ sinh',fn:()=>{if(!nearCauCaTra()||CCT_USE)return;CCT_USE={t:0};player.mov=false;player.swing=0;actionHeld=false;actQ=false;toast('Bạn vào chòi. Vui lòng chờ một lát…');}},{t:'Để sau'}]}]);
+}
+function updateCauCaTra(dt){
+ if(!CCT_USE)return;if(S.map!=='farm'){CCT_USE=null;return;}CCT_USE.t+=dt;if(CCT_USE.t<2.4)return;CCT_USE=null;
+ S.flags.cctDay=dayIdx();S.energy=Math.min(S.maxE,S.energy+15);sfx('splash');burst(53*T,60*T,['#8fd0f0','#fff'],6);toast('Xong rồi, bạn thấy nhẹ người hơn! +15 sức. Hôm nay câu cá ở ao nông trại sẽ thuận lợi hơn.');refreshHUD();save();
+}
+
 
 /* ===================== VÙNG: HỆ THỐNG PHỤ ===================== */
 const JEWEL=[{id:'nhanbac',n:'Nhẫn Bạc Hoài Phố',ic:'💍',p:2500,d:'Bán mọi thứ đắt hơn 5%.'},{id:'vongngoc',n:'Vòng Ngọc Bích',ic:'📿',p:4000,d:'+15 máu tối đa.'}];
@@ -1679,7 +1692,7 @@ const mineOpen=id=>{const i=MINE_ORDER.indexOf(id);return i===0||!!S.seals[MINE_
 
 /* ===================== UI CHUNG ===================== */
 const UI={title:true,dlg:false,menu:false,fade:false};
-const paused=()=>UI.title||UI.dlg||UI.menu||UI.fade||!!HOME_RITUAL;
+const paused=()=>UI.title||UI.dlg||UI.menu||UI.fade||!!HOME_RITUAL||!!CCT_USE;
 const fadeEl=$('#fade');
 function fadeTo(cb,ms){UI.fade=true;fadeEl.style.opacity=1;setTimeout(()=>{cb();setTimeout(()=>{fadeEl.style.opacity=0;UI.fade=false;},120);},ms||380);}
 let bannerTO=null;
@@ -2270,6 +2283,7 @@ function npcAtTile(tx,ty){for(const n of npcsHere())if(Math.abs(n.px-(tx*T+8))<1
 function animalAt(tx,ty){if(S.map!=='farm'||!coopBarn().built)return null;for(const a of coopBarn().animals)if(Math.abs(a.x-(tx*T+8))<11&&Math.abs(a.y-5-(ty*T+8))<11)return a;return null;}
 function dogAt(tx,ty){return dogVisible()&&Math.abs(dogPosition().x-(tx*T+8))<10&&Math.abs(dogPosition().y-5-(ty*T+8))<10;}
 function hasInteractable(tx,ty){
+ if(cauCaTraAt(tx,ty))return true;
  const k=tx+','+ty;
  if(dogAt(tx,ty))return true;
  if(isOut()){if(tx<0||ty<0||tx>=W||ty>=H)return false;if(npcAtTile(tx,ty)||animalAt(tx,ty)||OCC[ty*W+tx]||WT[ty*W+tx]===8)return true;const so=SOIL()[k];if(so&&so.c&&ready(so.c))return true;const o=OBJ()[k];return !!(o&&o.t==='lotus');}
@@ -2280,6 +2294,7 @@ function hasInteractable(tx,ty){
 }
 function interactAt(tx,ty){
  const k=tx+','+ty;faceTo([tx,ty]);
+ if(cauCaTraAt(tx,ty)){cauCaTra();return true;}
  if(dogAt(tx,ty)&&!(isOut()&&tx>=0&&ty>=0&&tx<W&&ty<H&&OCC[ty*W+tx])&&!(isIn()&&furnAt(tx,ty))){petDog();return true;}
  if(isOut()){
   if(tx<0||ty<0||tx>=W||ty>=H)return false;
@@ -2921,7 +2936,7 @@ function updParts(dt){
 
 /* ===================== VÒNG LẶP ===================== */
 function update(dt){
- if(S&&!UI.title)updateHomeRitual(dt);
+ if(S&&!UI.title){updateHomeRitual(dt);updateCauCaTra(dt);}
  tAnim+=dt;syncZone();updCut(dt);
  if(DEF){updDef(dt);return;}
  if(S&&!UI.title){qTick(dt);bgmTick(dt);updNPCs(dt);CoopNet.tick(dt);if(S.energy<=0)S.exh=1;}SHAKE=Math.max(0,SHAKE-dt);FLASH=Math.max(0,FLASH-dt);
@@ -3154,7 +3169,8 @@ function drawInfo(){
  if(S.map!=='farm')return;
  const t=mouse.in&&mouse.type==='mouse'?mouseTile():getTarget();if(!t)return;const [tx,ty]=t;
  let lines=null,prog=null;const so=S.soil[tx+','+ty];
- if(WT[ty*W+tx]===8){const B=coopBarn();lines=['Máng cỏ dùng chung · '+B.hay+'/80','Mỗi con ăn 1 cỏ mỗi đêm','Lại gần, nhấn E để thêm tối đa 10 cỏ'];}
+ if(cauCaTraAt(tx,ty)){lines=['Cầu Cá Tra',S.flags.cctDay===dayIdx()?'Hôm nay đã sử dụng':'Lại gần bậc phía bờ · E để đi vệ sinh'];}
+ else if(WT[ty*W+tx]===8){const B=coopBarn();lines=['Máng cỏ dùng chung · '+B.hay+'/80','Mỗi con ăn 1 cỏ mỗi đêm','Lại gần, nhấn E để thêm tối đa 10 cỏ'];}
  else if(so&&so.c){const C=CROPS[so.c.k],rd=ready(so.c),left=C.days-so.c.a,pl=so.c.d!=null?dayIdx()-so.c.d:null;
   lines=[ITEMS[so.c.k].n,`Thời gian trồng đến thu hoạch: ${C.days} ngày tưới`,(pl!=null?`Đã trồng ${pl} ngày · `:'')+(rd?'Đã chín, thu hoạch được!':`Còn ${left} ngày tưới nữa`),rd?'':(so.w?'Hôm nay đã tưới ✓':'Hôm nay chưa tưới!'),C.regrow?`Ra trái lại mỗi ${C.regrow} ngày`:'',so.f?(so.f==='phep'?'Đã rải Phân Phép':'Đã bón Phân Sinh Học'):''];prog=Math.min(1,so.c.a/C.days);}
  else{const a=animalAt(tx,ty);if(a){const A=ANIMALS[a.type];lines=[`${a.name} · ${A.n}`,a.prod?`Có ${ITEMS[a.prod].n}, bấm để nhặt!`:`Cho ${ITEMS[A.prod].n} ${A.every>1?'mỗi 2 ngày':'mỗi sáng'} nếu máng có cỏ`,A.every>1&&!a.prod?`Còn ${A.every-animalFeedProgress(a)} đêm được ăn nữa`:'',`Máng cỏ còn ${coopBarn().hay} · ${a.pet?'đã vuốt ve':'chưa vuốt ve hôm nay'}`];if(A.every>1&&!a.prod)prog=animalFeedProgress(a)/A.every;}}
@@ -3209,6 +3225,7 @@ function drawPart(p){
  ctx.globalAlpha=1;
 }
 function drawPlayer(){
+ if(CCT_USE)return;
  if(HOME_RITUAL){drawHomeRitual();return;}
  const p=player;
  if(p.inv>0&&Math.floor(tAnim*20)%2)return;
