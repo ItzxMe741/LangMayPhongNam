@@ -20,7 +20,18 @@ const COOP_MAX=6,COOP_PREFIX='phongnam-',COOP_CHARS='ABCDEFGHJKMNPQRSTUVWXYZ2345
 const COOP_PLOTS=[null,{x0:44,x1:60,y0:41,y1:51,hx:46,hy:41},{x0:61,x1:76,y0:41,y1:51,hx:63,hy:41},{x0:44,x1:64,y0:3,y1:13,hx:46,hy:3},{x0:44,x1:64,y0:15,y1:25,hx:46,hy:15},{x0:3,x1:23,y0:3,y1:10,hx:5,hy:3}];
 const COOP={on:false,role:null,slot:-1,peer:null,conn:null,conns:{},peers:{},code:'',status:'idle',msg:'',inVal:'',lastPos:'',posT:0,clockT:0,saveT:0,fromHost:false,joinTimer:null};
 const coopPeerCtor=()=>(typeof window!=='undefined'&&(window.Peer||(window.peerjs&&window.peerjs.Peer)))||null;
-const coopPeerOpts=()=>window.PN_PEER_OPTS||undefined;
+const coopPeerOpts=()=>window.PN_PEER_OPTS||{
+ config:{
+  iceServers:[
+   {urls:'stun:stun.l.google.com:19302'},
+   {urls:'stun:stun1.l.google.com:19302'},
+   {urls:'stun:stun2.l.google.com:19302'},
+   {urls:'stun:stun3.l.google.com:19302'},
+   {urls:'stun:stun4.l.google.com:19302'},
+   {urls:'stun:stun.cloudflare.com:3478'}
+  ]
+ }
+};
 /* --- sở hữu đất --- */
 const inHostFields=(x,y)=>(x>=3&&x<=37&&y>=42&&y<=77)||(x>=3&&x<=29&&y>=12&&y<=37);
 function coopPlotOf(x,y){for(let s=1;s<COOP_MAX;s++){const P=COOP_PLOTS[s];if(x>=P.x0&&x<=P.x1&&y>=P.y0&&y<=P.y1)return s;}return 0;}
@@ -433,6 +444,7 @@ function coopGuestHandle(m){if(!m||typeof m!=='object')return;
   case 'quests':if(COOP.on)coopApplyQuests(m.quest);break;
   case 'clock':if(COOP.on)coopRecvClock(m);break;
   case 'newday':if(COOP.on)coopRecvNewDay(m);break;
+  case 'wrong_pass':CoopNet.fail(m.msg||'Mật khẩu phòng không đúng!');toast('❌ '+(m.msg||'Mật khẩu phòng không đúng!'));break;
   case 'full':CoopNet.fail('Phòng đã đủ '+COOP_MAX+' người.');break;
   case 'bye':coopTeardown('Host đã đóng phòng.');CoopNet.ui();break;
  }}
