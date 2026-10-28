@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<!-- Firebase App & Firestore for optional zero-friction Cloud Save -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
 :root{
   --bg:#1a120c;--paper:#ecdcb4;--paper2:#dcc592;--ink:#3b230f;--ink2:#6e4a26;--lacquer:#5a2e16;--gold:#d9a23a;--tile:#b8432f;--leaf:#4f8a3a;
@@ -273,6 +276,7 @@ body.touch #goal{font-size:11px}
       <div id="topmenu-wrap">
         <button class="btn" id="b-menu-toggle" title="Menu tính năng" aria-label="Menu tính năng">☰</button>
         <div id="topmenu-dropdown" class="panel hidden">
+          <button class="tmenu-btn" id="b-cloud" type="button"><span class="tmenu-ico">☁️</span><span class="tmenu-txt">Lưu Đám Mây</span></button>
           <button class="tmenu-btn" id="b-perf" type="button"><span class="tmenu-ico">⚡</span><span class="tmenu-txt" id="b-perf-txt">Hiệu năng Siêu Mượt</span></button>
           <button class="tmenu-btn" id="b-full" type="button"><span class="tmenu-ico">⛶</span><span class="tmenu-txt">Toàn màn hình</span></button>
           <button class="tmenu-btn" id="b-export" type="button"><span class="tmenu-ico">💾</span><span class="tmenu-txt">Xuất file lưu (.json)</span></button>
@@ -327,10 +331,26 @@ body.touch #goal{font-size:11px}
         <button class="btn red" id="t-cont">Chơi tiếp nông trại</button>
         <button class="btn" id="t-new">Bắt đầu nông trại mới</button>
         <button class="btn" id="t-join-btn">🔑 Vào phòng bạn bè (Co-op)</button>
+        <button class="btn" id="t-cloud-btn">☁️ Đồng bộ đám mây (Cloud Save)</button>
         <button class="btn" id="t-import">📂 Nạp file lưu (.json)</button>
         <button class="btn" id="t-export">💾 Xuất file lưu (.json)</button>
         <input type="file" id="t-file-input" accept=".json" style="display:none">
-        <button class="btn hidden" id="t-cloud">☁ Tải bản lưu đám mây</button>
+      </div>
+
+      <!-- KHUNG ĐỒNG BỘ ĐÁM MÂY (CLOUD SAVE) -->
+      <div id="t-cloud-box" class="hidden" style="background:var(--chip);border:2px solid var(--lacquer);border-radius:8px;padding:12px;margin-top:12px;text-align:left">
+        <div style="font-weight:900;font-size:14px;color:var(--tile);margin-bottom:4px">☁️ Lưu Trữ Đám Mây (Tài Khoản)</div>
+        <div style="font-size:12px;color:var(--ink2);margin-bottom:8px">Lưu và nạp trực tiếp qua mạng, không lo mất khi xóa Chrome:</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <input id="t-cloud-user" maxlength="24" placeholder="Tên tài khoản / Nông trại" autocomplete="off" style="flex:1;font:800 13px 'Be Vietnam Pro',sans-serif;padding:6px;border:2px solid var(--lacquer);border-radius:6px;background:var(--paper);color:var(--ink)">
+          <input id="t-cloud-pass" type="password" maxlength="32" placeholder="Mật khẩu" autocomplete="off" style="flex:1;font:800 13px 'Be Vietnam Pro',sans-serif;padding:6px;border:2px solid var(--lacquer);border-radius:6px;background:var(--paper);color:var(--ink)">
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <button class="btn red sm" id="t-cloud-pull" type="button" style="flex:1">📥 Tải về từ Mây</button>
+          <button class="btn sm" id="t-cloud-push" type="button" style="flex:1">☁️ Lưu lên Mây</button>
+          <button class="btn sm" id="t-cloud-cancel" type="button">Quay lại</button>
+        </div>
+        <div id="t-cloud-msg" style="font-size:12px;font-weight:700;color:var(--tile);min-height:16px"></div>
       </div>
 
       <!-- KHUNG VÀO PHÒNG BẠN BÈ (GUEST) TỪ MENU CHÍNH -->
@@ -3747,11 +3767,102 @@ function htxGive(pid,item){const Pj=HTXP[pid],tot=htxTotals(pid);let give;
  S.cong=(S.cong||0)+1;
  addPass(Math.min(10,1+Math.floor((item==='gold'?give/200:give)/20)));gainXP('nghe',4);sfx('coin');toast(`Đã góp ${item==='gold'?fmt(give):give+' '+ITEMS[item].n} cho ${Pj.n}.`);
  save();refreshHUD();if(MS&&MS.kind==='htx')renderMenu();}
-let CLOUDB=false,CLOUDA=false;
-async function cloudSave(){if(COOP.on)return;if(!ONLINE.db||!ONLINE.uid||!S||!S.name)return;if(CLOUDB){CLOUDA=true;return;}CLOUDB=true;
- do{CLOUDA=false;try{await ONLINE.db.doc(`data/users/${ONLINE.uid}/save`).set({json:JSON.stringify(Object.assign({},S,{map:'farm'})),t:S.savedAt||Date.now(),name:String(S.name).slice(0,16),day:S.day,season:S.season,year:S.year});if(!CLOUDOK){CLOUDOK=true;toast('☁ Đã đồng bộ bản lưu lên đám mây (dùng chung máy tính & điện thoại).');}}catch(e){}}while(CLOUDA);CLOUDB=false;}
-async function cloudCheck(){try{const sn=await ONLINE.db.doc(`data/users/${ONLINE.uid}/save`).get();if(!sn.exists)return;const d=sn.data();if(!d||typeof d.json!=='string')return;const loc=loadSave();if(loc&&(loc.savedAt||0)>=(d.t||0))return;CLOUDSAVE=d;
- if(UI.title){const b=$('#t-cloud');b.textContent=`☁ Tải bản lưu đám mây (${String(d.name||'').slice(0,16)} · Ngày ${d.day|0}, mùa ${SEASONS[d.season|0]?SEASONS[d.season|0].n:''})`;b.classList.remove('hidden');}}catch(e){}}
+// CẤU HÌNH CLOUD SAVE (FIREBASE HOẶC VERCEL API)
+window.FIREBASE_CONFIG = window.FIREBASE_CONFIG || {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "phongnam-game.firebaseapp.com",
+  projectId: "phongnam-game",
+  storageBucket: "phongnam-game.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef"
+};
+
+const CloudNet = {
+  apiBase: 'https://langmayphongnamgame.vercel.app/api/cloud',
+
+  async save(user, pass, farmData){
+    if(!user || !pass) throw new Error('Vui lòng nhập tên tài khoản và mật khẩu!');
+    if(window.firebase && window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY'){
+      return await this.saveFirebase(user, pass, farmData);
+    }
+    const res = await fetch(this.apiBase, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user, pass, data: farmData })
+    });
+    const json = await res.json();
+    if(!res.ok) throw new Error(json.error || 'Lỗi khi lưu lên máy chủ đám mây');
+    return json;
+  },
+
+  async load(user, pass){
+    if(!user || !pass) throw new Error('Vui lòng nhập tên tài khoản và mật khẩu!');
+    if(window.firebase && window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY'){
+      return await this.loadFirebase(user, pass);
+    }
+    const url = `${this.apiBase}?user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if(!res.ok) throw new Error(json.error || 'Không tìm thấy nông trại với tên và mật khẩu này trên đám mây');
+    return json;
+  },
+
+  async hashKey(u, p){
+    const msg = (u.trim().toLowerCase() + '::' + p.trim());
+    const buf = new TextEncoder().encode(msg);
+    const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+    const hashArr = Array.from(new Uint8Array(hashBuf));
+    return hashArr.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+  },
+
+  async saveFirebase(user, pass, farmData){
+    if(!window.fbDb){
+      if(!firebase.apps.length) firebase.initializeApp(window.FIREBASE_CONFIG);
+      window.fbDb = firebase.firestore();
+    }
+    const key = await this.hashKey(user, pass);
+    const payload = {
+      user: String(user).slice(0, 24),
+      savedAt: Date.now(),
+      day: farmData.day || 1,
+      season: farmData.season || 0,
+      year: farmData.year || 1,
+      gold: farmData.gold || 0,
+      json: JSON.stringify(farmData)
+    };
+    await window.fbDb.collection('phongnam_saves').doc(key).set(payload);
+    return payload;
+  },
+
+  async loadFirebase(user, pass){
+    if(!window.fbDb){
+      if(!firebase.apps.length) firebase.initializeApp(window.FIREBASE_CONFIG);
+      window.fbDb = firebase.firestore();
+    }
+    const key = await this.hashKey(user, pass);
+    const snap = await window.fbDb.collection('phongnam_saves').doc(key).get();
+    if(!snap.exists) throw new Error('Không tìm thấy nông trại với tên và mật khẩu này trên đám mây');
+    return snap.data();
+  }
+};
+
+let CLOUDB=false;
+async function cloudSave(){
+  if(COOP.on || CLOUDB) return;
+  const user = localStorage.getItem('phongnam_cloud_user');
+  const pass = localStorage.getItem('phongnam_cloud_pass');
+  if(!user || !pass) return;
+  CLOUDB = true;
+  try {
+    await CloudNet.save(user, pass, coopSaveView());
+    if(!CLOUDOK){CLOUDOK=true;toast('☁ Đã tự động đồng bộ nông trại lên đám mây.');}
+  } catch(e) {
+    console.warn('Auto cloud sync:', e.message);
+  } finally {
+    CLOUDB = false;
+  }
+}
+async function cloudCheck(){}
 
 /* ===================== MỞ RỘNG · SÀI GÒN PHỒN HOA ===================== */
 const SW=56,SH=30;let ST,SOCC;const SBLD=[],SGV=[];
@@ -5261,6 +5372,101 @@ if (rotBtn) {
 const btnFull=$('#b-full');if(btnFull)btnFull.onclick=toggleFullScreen;
 const btnZoom=$('#b-zoom');if(btnZoom)btnZoom.onclick=toggleZoom;
 const btnPerf=$('#b-perf');if(btnPerf)btnPerf.onclick=togglePerfMode;
+
+// CLOUD SAVE UI CONTROLS
+const cloudBtn=$('#t-cloud-btn'),cloudBox=$('#t-cloud-box'),cloudCancel=$('#t-cloud-cancel');
+const cloudPull=$('#t-cloud-pull'),cloudPush=$('#t-cloud-push'),cloudMsg=$('#t-cloud-msg');
+const cloudUser=$('#t-cloud-user'),cloudPass=$('#t-cloud-pass');
+
+// Load stored credentials
+try {
+  const cu = localStorage.getItem('phongnam_cloud_user');
+  const cp = localStorage.getItem('phongnam_cloud_pass');
+  if(cu&&cloudUser) cloudUser.value = cu;
+  if(cp&&cloudPass) cloudPass.value = cp;
+} catch(e){}
+
+if(cloudBtn&&cloudBox){
+  cloudBtn.onclick=()=>{
+    sfx('ui');
+    tMainSec.classList.add('hidden');
+    cloudBox.classList.remove('hidden');
+    if(!cloudUser.value) cloudUser.focus(); else cloudPass.focus();
+    if(cloudMsg) cloudMsg.textContent = '';
+  };
+  cloudCancel.onclick=()=>{
+    sfx('ui');
+    cloudBox.classList.add('hidden');
+    tMainSec.classList.remove('hidden');
+  };
+  
+  cloudPull.onclick=async()=>{
+    const user = (cloudUser.value||'').trim();
+    const pass = (cloudPass.value||'').trim();
+    if(!user||!pass){if(cloudMsg)cloudMsg.textContent='⚠️ Hãy nhập Tên tài khoản và Mật khẩu!';return;}
+    if(cloudMsg) cloudMsg.textContent='⏳ Đang tải nông trại từ đám mây...';
+    try {
+      const res = await CloudNet.load(user, pass);
+      const parsed = typeof res.json === 'string' ? JSON.parse(res.json) : (res.json || res);
+      if(!parsed||!parsed.look){if(cloudMsg)cloudMsg.textContent='⚠️ Bản lưu trên mây không hợp lệ!';return;}
+      localStorage.setItem('phongnam_cloud_user', user);
+      localStorage.setItem('phongnam_cloud_pass', pass);
+      localStorage.setItem(KEY, JSON.stringify(parsed));
+      if(navigator.storage&&navigator.storage.persist){navigator.storage.persist().catch(()=>{});}
+      S=Object.assign(newState(parsed.name,parsed.look),parsed);
+      migrate();
+      if(cloudMsg) cloudMsg.textContent='🎉 Tải thành công nông trại '+S.name+'!';
+      toast('🎉 Tải thành công nông trại '+S.name+' từ Đám Mây!');
+      setTimeout(()=>startGame(false), 500);
+    } catch(err){
+      if(cloudMsg) cloudMsg.textContent='❌ ' + err.message;
+    }
+  };
+
+  cloudPush.onclick=async()=>{
+    const user = (cloudUser.value||'').trim();
+    const pass = (cloudPass.value||'').trim();
+    if(!user||!pass){if(cloudMsg)cloudMsg.textContent='⚠️ Hãy nhập Tên tài khoản và Mật khẩu!';return;}
+    const s = loadSave() || S;
+    if(!s||!s.look){if(cloudMsg)cloudMsg.textContent='⚠️ Chưa có dữ liệu nông trại trong máy để lưu lên mây!';return;}
+    if(cloudMsg) cloudMsg.textContent='⏳ Đang đẩy dữ liệu lên đám mây...';
+    try {
+      await CloudNet.save(user, pass, s);
+      localStorage.setItem('phongnam_cloud_user', user);
+      localStorage.setItem('phongnam_cloud_pass', pass);
+      if(cloudMsg) cloudMsg.textContent='✅ Đã lưu nông trại lên đám mây thành công!';
+      toast('☁️ Đã lưu nông trại '+s.name+' lên đám mây thành công!');
+    } catch(err){
+      if(cloudMsg) cloudMsg.textContent='❌ ' + err.message;
+    }
+  };
+}
+
+// In-game dropdown cloud button
+const bCloud = $('#b-cloud');
+if(bCloud){
+  bCloud.onclick = async () => {
+    const user = localStorage.getItem('phongnam_cloud_user');
+    const pass = localStorage.getItem('phongnam_cloud_pass');
+    if(!user || !pass){
+      const u = prompt('Nhập Tên tài khoản nông trại của bạn:', S&&S.name?S.name:'');
+      if(!u) return;
+      const p = prompt('Nhập Mật khẩu bảo vệ:');
+      if(!p) return;
+      localStorage.setItem('phongnam_cloud_user', u.trim());
+      localStorage.setItem('phongnam_cloud_pass', p.trim());
+    }
+    toast('⏳ Đang đồng bộ lên đám mây...');
+    try {
+      const cu = localStorage.getItem('phongnam_cloud_user');
+      const cp = localStorage.getItem('phongnam_cloud_pass');
+      await CloudNet.save(cu, cp, coopSaveView());
+      toast('✅ Đã đồng bộ nông trại lên Đám Mây thành công!');
+    } catch(err){
+      toast('❌ Lỗi đồng bộ: ' + err.message);
+    }
+  };
+}
 
 // DROPDOWN MENU TIỆN ÍCH TRÊN CÙNG
 const menuToggle=$('#b-menu-toggle'),menuDropdown=$('#topmenu-dropdown');
