@@ -21,7 +21,7 @@
 
 ## 📁 Cấu trúc mã nguồn
 
-- [lang-may-phong-nam-ban-day-du.html](file:///c:/Users/Admin/Documents/LangMayPhongNam/lang-may-phong-nam-ban-day-du.html): Toàn bộ engine đồ họa canvas, logic game, âm thanh, hệ thống NPC, bản đồ và cốt truyện.
+- [index.html](file:///c:/Users/Admin/Documents/LangMayPhongNam/index.html): Toàn bộ engine đồ họa canvas, logic game, âm thanh, hệ thống NPC, bản đồ và cốt truyện.
 - [coop-module.js](file:///c:/Users/Admin/Documents/LangMayPhongNam/coop-module.js): Module mạng P2P PeerJS điều phối kết nối phòng chơi đa người chơi.
 - [.gitignore](file:///c:/Users/Admin/Documents/LangMayPhongNam/.gitignore): Tệp loại trừ file tạm hệ thống cho Git.
 
