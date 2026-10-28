@@ -44,10 +44,17 @@ body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webki
 #goal-toggle{display:block;width:100%;padding:0;border:0;background:transparent;color:var(--ink2);font:inherit;font-weight:800;text-align:left;cursor:pointer;pointer-events:auto;min-height:28px}
 #goal-content{padding-top:3px}
 #buffs{padding:5px 10px;font-size:12px;font-weight:800;line-height:1.5;font-variant-numeric:tabular-nums}
-#topbtns{position:absolute;top:10px;right:10px;display:flex;gap:6px}
+#topbtns{position:absolute;top:10px;right:10px;display:flex;gap:8px;z-index:25}
 #b-dog{position:absolute;bottom:10px;left:calc(50% + 4 * var(--slot) + 23px);z-index:11;font-size:12px;padding:7px 10px;min-height:calc(var(--slot) + 10px);max-width:90px}
 @media(max-width:760px){#b-dog{left:auto;right:10px;bottom:calc(var(--slot) + 27px);min-height:40px;max-width:none}}
-#topbtns .btn{width:42px;height:42px;padding:0;font-size:18px}
+#topbtns .btn{width:42px;height:42px;padding:0;font-size:18px;display:flex;align-items:center;justify-content:center}
+#topmenu-wrap{position:relative}
+#topmenu-dropdown{position:absolute;top:calc(100% + 6px);right:0;display:flex;flex-direction:column;gap:4px;padding:6px;min-width:185px;background:var(--paper);border:2px solid var(--lacquer);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.45);z-index:100}
+#topmenu-dropdown.hidden{display:none}
+.tmenu-btn{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--ink);font:700 13px 'Be Vietnam Pro',sans-serif;text-align:left;cursor:pointer;transition:background .15s, border-color .15s}
+.tmenu-btn:hover, .tmenu-btn:active{background:var(--chip);border-color:var(--lacquer)}
+.tmenu-ico{font-size:16px;width:22px;text-align:center;display:inline-block}
+.tmenu-txt{flex:1;white-space:nowrap}
 #loc{position:absolute;top:12px;left:50%;transform:translateX(-50%);padding:5px 14px;font-weight:800;font-size:13px;white-space:nowrap;pointer-events:none}
 #bars{position:absolute;right:12px;bottom:calc(var(--slot) + 40px);display:flex;gap:8px;pointer-events:none}
 .bar{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:800;color:#fff3da;text-shadow:0 1px 0 #000,0 0 3px #000}
@@ -143,11 +150,11 @@ canvas.ic{width:36px;height:44px}
 .seg .btn{flex:1}
 .tfoot{margin-top:14px;font-size:11px;color:var(--ink2);line-height:1.5}
 #touch{position:absolute;inset:0;pointer-events:none;z-index:10}
-#joy{position:absolute;left:18px;bottom:calc(var(--slot) + 44px);width:120px;height:120px;border-radius:50%;background:rgba(255,240,210,.18);border:3px solid rgba(255,240,210,.45);pointer-events:auto;touch-action:none}
-#knob{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:rgba(255,240,210,.7);border:3px solid var(--lacquer)}
-#tbtns{position:absolute;right:52px;bottom:calc(var(--slot) + 40px);display:flex;gap:12px;align-items:flex-end;pointer-events:auto}
-#tbtns .btn{width:66px;height:66px;border-radius:50%;padding:0;font-size:14px}
-#t-use{background:var(--tile)!important;color:#fff6e4!important;border-color:#6e1f12!important;width:78px!important;height:78px!important}
+#joy{position:absolute;left:36px;bottom:calc(var(--slot) + 36px);width:132px;height:132px;border-radius:50%;background:radial-gradient(circle,rgba(255,245,225,.24) 0%,rgba(255,240,210,.1) 100%);border:3px solid rgba(255,240,210,.6);box-shadow:0 6px 18px rgba(0,0,0,.3);pointer-events:auto;touch-action:none}
+#knob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:radial-gradient(circle,#fff8e8 0%,#ecdcb4 100%);border:3px solid var(--lacquer);box-shadow:0 3px 10px rgba(0,0,0,.35)}
+#tbtns{position:absolute;right:36px;bottom:calc(var(--slot) + 34px);display:flex;gap:14px;align-items:flex-end;pointer-events:auto}
+#tbtns .btn{width:70px;height:70px;border-radius:50%;padding:0;font-size:15px;font-weight:800;box-shadow:0 5px 14px rgba(0,0,0,.35)}
+#t-use{background:var(--tile)!important;color:#fff6e4!important;border-color:#6e1f12!important;width:84px!important;height:84px!important;font-size:17px!important;font-weight:900!important;box-shadow:0 6px 16px rgba(0,0,0,.45)!important}
 body.touch #bars{bottom:auto;top:62px}
 body.touch #tl{max-width:220px}
 body.touch #goal{font-size:11px}
@@ -224,13 +231,17 @@ body.touch #goal{font-size:11px}
 }
 @media (max-height: 520px){
   :root{--slot:36px}
-  #joy{width:96px;height:96px;left:14px;bottom:12px}
-  #knob{width:42px;height:42px;margin:-21px 0 0 -21px}
-  #tbtns{right:16px;bottom:12px;gap:8px}
-  #tbtns .btn{width:54px;height:54px;font-size:12px}
-  #t-use{width:64px!important;height:64px!important}
+  #joy{width:124px;height:124px;left:max(32px, env(safe-area-inset-left) + 16px);bottom:max(22px, env(safe-area-inset-bottom) + 8px)}
+  #knob{width:52px;height:52px;margin:-26px 0 0 -26px}
+  #tbtns{right:max(32px, env(safe-area-inset-right) + 16px);bottom:max(22px, env(safe-area-inset-bottom) + 8px);gap:14px}
+  #tbtns .btn{width:66px;height:66px;font-size:14px;font-weight:800}
+  #t-use{width:78px!important;height:78px!important;font-size:16px!important;font-weight:900!important}
   #hotbar{bottom:4px;padding:3px}
+  #topbtns{top:6px;right:6px}
   #topbtns .btn{width:36px;height:36px;font-size:15px}
+  #topmenu-dropdown{max-height:80vh;overflow-y:auto;min-width:170px;padding:4px}
+  .tmenu-btn{padding:6px 8px;font-size:12px;gap:8px}
+  .tmenu-ico{font-size:14px;width:18px}
   #tl{top:6px;left:6px;max-width:180px}
   #clock{padding:4px 8px;font-size:11px}
   #b-roomchat{bottom:calc(var(--slot) + 36px)}
@@ -258,16 +269,21 @@ body.touch #goal{font-size:11px}
     </div>
     <div id="loc" class="panel hidden"></div>
     <div id="topbtns">
-      <button class="btn" id="b-full" title="Toàn màn hình (F)" aria-label="Toàn màn hình">⛶</button>
       <button class="btn" id="b-zoom" title="Tầm nhìn rộng / vừa / gần (Z)" aria-label="Thu phóng">🔍</button>
-      <button class="btn" id="b-perf" title="Chế độ Siêu Mượt (60 FPS) / Sắc Nét" aria-label="Hiệu năng">⚡</button>
-      <button class="btn" id="b-export" title="Tải bản lưu về máy (.json)" aria-label="Tải bản lưu">💾</button>
-      <button class="btn" id="b-pass" title="Sổ Tay Mùa Lễ Hội" aria-label="Sổ Tay Mùa Lễ Hội">📜</button>
-      <button class="btn" id="b-coop" title="Co-op: chơi cùng bạn bè" aria-label="Co-op">🤝</button>
-      <button class="btn" id="b-quest" title="Sổ Nhiệm Vụ (L)" aria-label="Sổ Nhiệm Vụ">📖</button>
-      <button class="btn" id="b-bag" title="Túi đồ & kỹ năng (I)" aria-label="Túi đồ">🎒</button>
-      <button class="btn" id="b-help" title="Hướng dẫn (H)" aria-label="Hướng dẫn">?</button>
-      <button class="btn" id="b-snd" title="Bật/tắt âm thanh" aria-label="Âm thanh">🔊</button>
+      <div id="topmenu-wrap">
+        <button class="btn" id="b-menu-toggle" title="Menu tính năng" aria-label="Menu tính năng">☰</button>
+        <div id="topmenu-dropdown" class="panel hidden">
+          <button class="tmenu-btn" id="b-perf" type="button"><span class="tmenu-ico">⚡</span><span class="tmenu-txt" id="b-perf-txt">Hiệu năng Siêu Mượt</span></button>
+          <button class="tmenu-btn" id="b-full" type="button"><span class="tmenu-ico">⛶</span><span class="tmenu-txt">Toàn màn hình</span></button>
+          <button class="tmenu-btn" id="b-export" type="button"><span class="tmenu-ico">💾</span><span class="tmenu-txt">Xuất file lưu (.json)</span></button>
+          <button class="tmenu-btn" id="b-coop" type="button"><span class="tmenu-ico">🤝</span><span class="tmenu-txt">Chơi Co-op</span></button>
+          <button class="tmenu-btn" id="b-bag" type="button"><span class="tmenu-ico">🎒</span><span class="tmenu-txt">Túi đồ & Kỹ năng</span></button>
+          <button class="tmenu-btn" id="b-quest" type="button"><span class="tmenu-ico">📖</span><span class="tmenu-txt">Sổ Nhiệm Vụ</span></button>
+          <button class="tmenu-btn" id="b-pass" type="button"><span class="tmenu-ico">📜</span><span class="tmenu-txt">Sổ Lễ Hội</span></button>
+          <button class="tmenu-btn" id="b-snd" type="button"><span class="tmenu-ico" id="b-snd-ico">🔊</span><span class="tmenu-txt" id="b-snd-txt">Âm thanh</span></button>
+          <button class="tmenu-btn" id="b-help" type="button"><span class="tmenu-ico">❓</span><span class="tmenu-txt">Hướng dẫn</span></button>
+        </div>
+      </div>
     </div>
     <button class="btn hidden" id="b-dog" aria-label="Buộc chó">🐕 Buộc chó</button>
     <button class="btn hidden" id="b-roomchat" aria-expanded="false" aria-controls="room-chat">💬 Chat co-op</button>
@@ -4219,7 +4235,7 @@ function updateGameMusic(dt){
 }
 function setGameSoundMuted(value,fromGesture){
  mute=!!value;try{localStorage.setItem('phongnam_sound_muted',mute?'1':'0');}catch(e){}
- const button=$('#b-snd');button.textContent=mute?'🔇':'🔊';button.setAttribute('aria-label',mute?'Bật âm thanh':'Tắt âm thanh');button.title=mute?'Bật nhạc và hiệu ứng':'Tắt nhạc và hiệu ứng';
+ const ico=$('#b-snd-ico'),txt=$('#b-snd-txt'),button=$('#b-snd');if(ico)ico.textContent=mute?'🔇':'🔊';else if(button)button.textContent=mute?'🔇':'🔊';if(txt)txt.textContent=mute?'Bật âm thanh':'Tắt âm thanh';if(button){button.setAttribute('aria-label',mute?'Bật âm thanh':'Tắt âm thanh');button.title=mute?'Bật nhạc và hiệu ứng':'Tắt nhạc và hiệu ứng';}
  if(mute){if(GAME_MUSIC.audio){GAME_MUSIC.audio.pause();GAME_MUSIC.audio.volume=0;}GAME_MUSIC.gain=0;}else{if(fromGesture)unlockGameMusic();if(GAME_MUSIC.ready)updateGameMusic(.016);}
 }
 addEventListener('pointerdown',unlockGameMusic,{capture:true});
@@ -5049,7 +5065,12 @@ function toggleFullScreen(){
 
 function togglePerfMode(){
  PERF_MODE=(PERF_MODE==='smooth'?'sharp':'smooth');
- const b=$('#b-perf');if(b)b.textContent=PERF_MODE==='smooth'?'⚡':'✨';
+ const b=$('#b-perf');
+ if(b){
+  const ico=b.querySelector('.tmenu-ico'),txt=$('#b-perf-txt');
+  if(ico)ico.textContent=PERF_MODE==='smooth'?'⚡':'✨';
+  if(txt)txt.textContent=PERF_MODE==='smooth'?'Hiệu năng Siêu Mượt':'Đồ họa Sắc Nét';
+ }
  toast(PERF_MODE==='smooth'?'⚡ Đã bật Chế độ Siêu Mượt (60 FPS & Tiết kiệm pin)':'✨ Đã bật Chế độ Sắc Nét');
  resize();
 }
@@ -5240,6 +5261,22 @@ if (rotBtn) {
 const btnFull=$('#b-full');if(btnFull)btnFull.onclick=toggleFullScreen;
 const btnZoom=$('#b-zoom');if(btnZoom)btnZoom.onclick=toggleZoom;
 const btnPerf=$('#b-perf');if(btnPerf)btnPerf.onclick=togglePerfMode;
+
+// DROPDOWN MENU TIỆN ÍCH TRÊN CÙNG
+const menuToggle=$('#b-menu-toggle'),menuDropdown=$('#topmenu-dropdown');
+if(menuToggle&&menuDropdown){
+ menuToggle.onclick=(e)=>{e.stopPropagation();menuDropdown.classList.toggle('hidden');sfx('ui');};
+ menuDropdown.addEventListener('click',(e)=>{
+  if(e.target.closest('.tmenu-btn')){
+   menuDropdown.classList.add('hidden');
+  }
+ });
+ document.addEventListener('click',(e)=>{
+  if(!e.target.closest('#topmenu-wrap')){
+   menuDropdown.classList.add('hidden');
+  }
+ });
+}
 
 function exportSaveGame(){
  const s=loadSave()||S;
