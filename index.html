@@ -260,6 +260,7 @@ body.touch #goal{font-size:11px}
     <div id="topbtns">
       <button class="btn" id="b-full" title="Toàn màn hình (F)" aria-label="Toàn màn hình">⛶</button>
       <button class="btn" id="b-zoom" title="Tầm nhìn rộng / vừa / gần (Z)" aria-label="Thu phóng">🔍</button>
+      <button class="btn" id="b-perf" title="Chế độ Siêu Mượt (60 FPS) / Sắc Nét" aria-label="Hiệu năng">⚡</button>
       <button class="btn" id="b-export" title="Tải bản lưu về máy (.json)" aria-label="Tải bản lưu">💾</button>
       <button class="btn" id="b-pass" title="Sổ Tay Mùa Lễ Hội" aria-label="Sổ Tay Mùa Lễ Hội">📜</button>
       <button class="btn" id="b-coop" title="Co-op: chơi cùng bạn bè" aria-label="Co-op">🤝</button>
@@ -394,14 +395,20 @@ function softShadow(g,x,y,rx,a){
  g.drawImage(s,Math.round(x-s.width/2),Math.round(y-s.height/2));
  g.globalAlpha=1;
 }
+let PERF_MODE=(('ontouchstart' in window||navigator.maxTouchPoints>0||window.innerWidth<900)?'smooth':'sharp');
+const LIGHT_STAMP=mk(64,64,g=>{const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.5,'rgba(0,0,0,.75)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);});
+const CLOUD_SHAD=mk(128,128,g=>{const gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,'rgba(16,28,52,.12)');gr.addColorStop(1,'rgba(16,28,52,0)');g.fillStyle=gr;g.fillRect(0,0,128,128);});
 const SCR=document.createElement('canvas');SCR.width=SCR.height=56;const SG=SCR.getContext('2d');
 const SIL=document.createElement('canvas');SIL.width=SIL.height=56;const SLG=SIL.getContext('2d');
 const SCR2=document.createElement('canvas');SCR2.width=SCR2.height=96;const SG2=SCR2.getContext('2d');
 const SIL2=document.createElement('canvas');SIL2.width=SIL2.height=96;const SLG2=SIL2.getContext('2d');
-function outlined(g,x,y,fn,big){const A=big?SCR2:SCR,AG=big?SG2:SG,B=big?SIL2:SIL,BG=big?SLG2:SLG,Z=big?96:56,ax=big?48:28,ay=big?84:46;
+function outlined(g,x,y,fn,big){
+ if(PERF_MODE==='smooth'){fn(g,x,y);return;}
+ const A=big?SCR2:SCR,AG=big?SG2:SG,B=big?SIL2:SIL,BG=big?SLG2:SLG,Z=big?96:56,ax=big?48:28,ay=big?84:46;
  x=Math.round(x);y=Math.round(y);AG.clearRect(0,0,Z,Z);NOSH=true;try{fn(AG,ax,ay);}finally{NOSH=false;}
  BG.globalCompositeOperation='source-over';BG.clearRect(0,0,Z,Z);BG.drawImage(A,0,0);BG.globalCompositeOperation='source-in';BG.fillStyle='rgba(30,16,12,.9)';BG.fillRect(0,0,Z,Z);
- const ox=x-ax,oy=y-ay;g.drawImage(B,ox-1,oy);g.drawImage(B,ox+1,oy);g.drawImage(B,ox,oy-1);g.drawImage(B,ox,oy+1);g.drawImage(A,ox,oy);}
+ const ox=x-ax,oy=y-ay;g.drawImage(B,ox-1,oy);g.drawImage(B,ox+1,oy);g.drawImage(B,ox,oy-1);g.drawImage(B,ox,oy+1);g.drawImage(A,ox,oy);
+}
 const HALO={};
 function halo(c){if(HALO[c])return HALO[c];return HALO[c]=mk(64,64,g=>{const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,c);gr.addColorStop(.22,hexA(c,.6));gr.addColorStop(.55,hexA(c,.18));gr.addColorStop(1,hexA(c,0));g.fillStyle=gr;g.fillRect(0,0,64,64);});}
 function glowAt(g,x,y,r,c,a){if(r<1||a<=0)return;g.globalAlpha=Math.min(1,a);g.drawImage(halo(c),Math.round(x-r),Math.round(y-r),Math.round(r*2),Math.round(r*2));g.globalAlpha=1;}
@@ -3224,7 +3231,7 @@ function render(){
  if(isOut()){
   for(const b of BF){const f=Math.floor(tAnim*14+b.t)%2,x=Math.round(b.x),y=Math.round(b.y);P(ctx,x-2,y,2,f?2:1,b.c);P(ctx,x+1,y,2,f?2:1,b.c);P(ctx,x,y,1,2,'#3a2a1a');}
   for(const b of BIRDS)for(let k=0;k<b.n;k++){const x=Math.round(b.x-k*8),y=Math.round(b.y+Math.abs(k-1)*4+(k%2)*2),f=Math.floor(tAnim*8+k)%2;P(ctx,x-2,y-f,2,1,'#2a2a34');P(ctx,x+1,y-f,2,1,'#2a2a34');P(ctx,x,y,1,1,'#2a2a34');ctx.fillStyle='rgba(18,24,36,.13)';ctx.fillRect(x-1,y+42,3,1);}
-  if(!UI.title&&!S.rain&&SUN.a>.2)for(let i=0;i<4;i++){const span=W*T+400,cxw=((hash(i,3,0)*span+tAnim*7)%span)-200,cyw=hash(i,4,0)*H*T,r=70+hash(i,5,0)*70;const gr=ctx.createRadialGradient(cxw,cyw,0,cxw,cyw,r);gr.addColorStop(0,`rgba(16,28,52,${(.11*SUN.a).toFixed(3)})`);gr.addColorStop(1,'rgba(16,28,52,0)');ctx.fillStyle=gr;ctx.fillRect(cxw-r,cyw-r*.6,r*2,r*1.2);}
+  if(!UI.title&&!S.rain&&SUN.a>.2){ctx.globalAlpha=Math.min(1,SUN.a);for(let i=0;i<4;i++){const span=W*T+400,cxw=((hash(i,3,0)*span+tAnim*7)%span)-200,cyw=hash(i,4,0)*H*T,r=70+hash(i,5,0)*70;ctx.drawImage(CLOUD_SHAD,Math.round(cxw-r),Math.round(cyw-r*.6),Math.round(r*2),Math.round(r*1.2));}ctx.globalAlpha=1;}
  }
  ctx.setTransform(K,0,0,K,0,0);
  drawLighting();
@@ -3235,7 +3242,7 @@ function render(){
  if(S.map==='east')drawLanternMsgs();
  ctx.setTransform(K,0,0,K,0,0);
  if(S.rain&&isOut()){ctx.fillStyle='rgba(40,60,100,.16)';ctx.fillRect(0,0,VW,VH);ctx.fillStyle='rgba(190,210,255,.55)';
-  for(let i=0;i<110;i++){const sp=230*(.8+hash(i,2,0)*.4);const y=((hash(i,1,0)*(VH+20)+tAnim*sp)%(VH+20))-10;const x=((hash(i,0,0)*(VW+60)-tAnim*30)%(VW+60)+VW+60)%(VW+60)-30;ctx.fillRect(Math.round(x),Math.round(y),1,5);}
+  const rainN=PERF_MODE==='smooth'?45:110;for(let i=0;i<rainN;i++){const sp=230*(.8+hash(i,2,0)*.4);const y=((hash(i,1,0)*(VH+20)+tAnim*sp)%(VH+20))-10;const x=((hash(i,0,0)*(VW+60)-tAnim*30)%(VW+60)+VW+60)%(VW+60)-30;ctx.fillRect(Math.round(x),Math.round(y),1,5);}
   ctx.fillStyle='rgba(215,228,255,.55)';for(let i=0;i<28;i++){const sd=Math.floor(tAnim*6+hash(i,9,0)*6);const x=Math.round(hash(i,sd,1)*VW),y=Math.round(hash(i,sd,2)*VH);ctx.fillRect(x-1,y,1,1);ctx.fillRect(x+1,y,1,1);ctx.fillRect(x,y-1,1,1);}}
  if(isOut()&&!UI.title)drawRays();
  if(!inMine&&S.time<480){ctx.fillStyle=`rgba(255,180,120,${((480-S.time)/120*.12).toFixed(3)})`;ctx.fillRect(0,0,VW,VH);}
@@ -3278,14 +3285,16 @@ function drawInfo(){
  lines.forEach((l,i)=>{ctx.font=(i?'600':'bold')+' 7px "Be Vietnam Pro",sans-serif';ctx.fillStyle=i===0?'#8a2a14':'#3b230f';ctx.fillText(l,bx+6,by+9+i*9);});
  if(prog!=null){const py=by+hgt-8;P(ctx,bx+6,py,w-12,4,'#6e4a26');P(ctx,bx+6,py,Math.round((w-12)*prog),4,prog>=1?'#f2c14a':'#6fc14a');P(ctx,bx+6,py,Math.round((w-12)*prog),1,'rgba(255,255,255,.4)');}
 }
+let RAY_GR=null,RAY_VH=0;
 function drawRays(){
  const t=S.time;if(S.rain||t<380||t>1110)return;
  const I=t<600?.3+.9*(1-(t-380)/220):t>900?.3+.9*Math.min(1,(t-900)/150):.3;
  ctx.globalCompositeOperation='lighter';const sk=VH*.38+SUN.dx*4;
+ if(!RAY_GR||RAY_VH!==VH){RAY_VH=VH;RAY_GR=ctx.createLinearGradient(0,0,0,VH);RAY_GR.addColorStop(0,'rgba(255,222,150,1)');RAY_GR.addColorStop(.7,'rgba(255,222,150,.35)');RAY_GR.addColorStop(1,'rgba(255,222,150,0)');}
  for(let i=0;i<5;i++){const w=14+hash(i,1,7)*30,x0=((i*VW/4.2+hash(i,2,7)*60+tAnim*3)%(VW+200))-60,al=Math.max(0,(.04+.028*Math.sin(tAnim*.6+i*2))*I);
-  const gr=ctx.createLinearGradient(0,0,0,VH);gr.addColorStop(0,`rgba(255,222,150,${al.toFixed(3)})`);gr.addColorStop(.7,`rgba(255,222,150,${(al*.35).toFixed(3)})`);gr.addColorStop(1,'rgba(255,222,150,0)');ctx.fillStyle=gr;
+  ctx.globalAlpha=Math.min(1,al);ctx.fillStyle=RAY_GR;
   ctx.beginPath();ctx.moveTo(x0,0);ctx.lineTo(x0+w,0);ctx.lineTo(x0+w-sk,VH);ctx.lineTo(x0-sk,VH);ctx.closePath();ctx.fill();}
- ctx.globalCompositeOperation='source-over';
+ ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
 }
 function drawReel(){
  const F=FISH,w=Math.min(160,VW-40),x=Math.round(VW/2-w/2),y=Math.round(VH*.3);
@@ -3398,7 +3407,7 @@ function drawLighting(){
  if(!LC||LC.width!==VW||LC.height!==VH){LC=document.createElement('canvas');LC.width=VW;LC.height=VH;lg=LC.getContext('2d');}
  lg.globalCompositeOperation='source-over';lg.clearRect(0,0,VW,VH);lg.fillStyle=`rgba(${col},${a})`;lg.fillRect(0,0,VW,VH);
  lg.globalCompositeOperation='destination-out';
- for(const [x,y,r] of L){const sx=x-cam.x,sy=y-cam.y;if(sx<-r||sy<-r||sx>VW+r||sy>VH+r)continue;const gr=lg.createRadialGradient(sx,sy,0,sx,sy,r);gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.5,'rgba(0,0,0,.75)');gr.addColorStop(1,'rgba(0,0,0,0)');lg.fillStyle=gr;lg.fillRect(sx-r,sy-r,r*2,r*2);}
+ for(const [x,y,r] of L){const sx=x-cam.x,sy=y-cam.y;if(sx<-r||sy<-r||sx>VW+r||sy>VH+r)continue;lg.drawImage(LIGHT_STAMP,Math.round(sx-r),Math.round(sy-r),Math.round(r*2),Math.round(r*2));}
  ctx.drawImage(LC,0,0);
  ctx.globalCompositeOperation='lighter';
  const gi=S.map==='mine'?.85:S.map==='cho'?.38:Math.max(.4,a/.7);for(const [x,y,r,c,k] of L){if(!c)continue;const sx=x-cam.x,sy=y-cam.y;if(sx<-r||sy<-r||sx>VW+r||sy>VH+r)continue;if(k==='p'){glowAt(ctx,sx,sy+4,r*.9,c,.1*gi);continue;}glowAt(ctx,sx,sy,r*.85,c,.26*gi);glowAt(ctx,sx,sy,r*.22,c,.45*gi);}
@@ -5038,9 +5047,17 @@ function toggleFullScreen(){
  }
 }
 
+function togglePerfMode(){
+ PERF_MODE=(PERF_MODE==='smooth'?'sharp':'smooth');
+ const b=$('#b-perf');if(b)b.textContent=PERF_MODE==='smooth'?'⚡':'✨';
+ toast(PERF_MODE==='smooth'?'⚡ Đã bật Chế độ Siêu Mượt (60 FPS & Tiết kiệm pin)':'✨ Đã bật Chế độ Sắc Nét');
+ resize();
+}
+
 function resize(){
  const isTouch=('ontouchstart' in window||navigator.maxTouchPoints>0||window.innerWidth<900);
- DPR=Math.min(window.devicePixelRatio||1,isTouch?1.5:2);const r=$('#game').getBoundingClientRect();
+ const maxDpr=PERF_MODE==='smooth'?(isTouch?1.0:1.25):(isTouch?1.5:2.0);
+ DPR=Math.min(window.devicePixelRatio||1,maxDpr);const r=$('#game').getBoundingClientRect();
  const cw=Math.max(1,r.width),ch=Math.max(1,r.height);
  cv.width=Math.round(cw*DPR);cv.height=Math.round(ch*DPR);
  // Target in game pixels: 'wide' = 480-560 (nhỏ đồ vật, nhìn xa, bao quát), 'normal' = 360-420, 'close' = 260-300
@@ -5222,6 +5239,7 @@ if (rotBtn) {
 
 const btnFull=$('#b-full');if(btnFull)btnFull.onclick=toggleFullScreen;
 const btnZoom=$('#b-zoom');if(btnZoom)btnZoom.onclick=toggleZoom;
+const btnPerf=$('#b-perf');if(btnPerf)btnPerf.onclick=togglePerfMode;
 
 function exportSaveGame(){
  const s=loadSave()||S;
