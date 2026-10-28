@@ -27,9 +27,9 @@
 :root[data-theme="dark"]{--bg:#0d0907;--paper:#2f2117;--paper2:#3e2c1e;--ink:#f1dfba;--ink2:#cfae80;--lacquer:#8a4a22;--chip:#3a2a1d;--shade:rgba(0,0,0,.55);--goldink:#e8b850;color-scheme:dark;}
 *{box-sizing:border-box}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
-html{height:100%;height:-webkit-fill-available}html,body{height:100%;height:100dvh;height:-webkit-fill-available;margin:0;background:var(--bg);color:var(--ink);overflow:hidden}
+html,body{position:fixed;inset:0;width:100%;height:100%;margin:0;padding:0;background:#1a120c;color:var(--ink);overflow:hidden}
 body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
-#game{position:relative;width:100%;height:100%;overflow:hidden;touch-action:none}
+#game{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;touch-action:none}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated}
 .hidden{display:none!important}
 .panel{background:var(--paper);color:var(--ink);border:3px solid var(--lacquer);border-radius:10px;box-shadow:inset 0 0 0 2px var(--gold),inset 0 0 0 4px var(--paper),0 4px 0 var(--shade)}
@@ -235,9 +235,14 @@ body.touch #goal-content{padding-top:2px;max-height:50px;overflow-y:auto;pointer
   text-align:center;
   padding:24px;
 }
-@media (max-width: 900px) and (orientation: portrait){
+@media (orientation: portrait){
   #rotate-prompt{
     display:flex!important;
+  }
+}
+@media (orientation: landscape){
+  #rotate-prompt{
+    display:none!important;
   }
 }
 @keyframes rotanim {
@@ -421,7 +426,8 @@ body.touch #goal-content{padding-top:2px;max-height:50px;overflow-y:auto;pointer
 /* ===================== TIỆN ÍCH ===================== */
 const T=16,MW=24,MH=18;let W=80,H=80;
 const $=s=>document.querySelector(s);
-const cv=$('#cv'),ctx=cv.getContext('2d',{alpha:false,desynchronized:true});
+const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const cv=$('#cv'),ctx=cv.getContext('2d', isIOSDevice ? {alpha:false} : {alpha:false, desynchronized:true});
 let K=3,VW=400,VH=240,DPR=1,tAnim=0;
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 function hash(x,y,s){let h=Math.imul(x|0,374761393)+Math.imul(y|0,668265263)+Math.imul((s|0)+1,1274126177);h=Math.imul(h^(h>>>13),1103515245);return((h^(h>>>16))>>>0)/4294967296;}
@@ -5213,18 +5219,29 @@ function togglePerfMode(){
 
 function resize(){
  const isTouch=('ontouchstart' in window||navigator.maxTouchPoints>0||window.innerWidth<900);
- const maxDpr=PERF_MODE==='smooth'?(isTouch?1.0:1.25):(isTouch?1.5:2.0);
- DPR=Math.min(window.devicePixelRatio||1,maxDpr);const r=$('#game').getBoundingClientRect();
- const cw=Math.max(1,r.width),ch=Math.max(1,r.height);
- cv.width=Math.round(cw*DPR);cv.height=Math.round(ch*DPR);
+ const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+ const maxDpr = isIOS ? 1.0 : (PERF_MODE==='smooth' ? (isTouch ? 1.0 : 1.25) : (isTouch ? 1.5 : 2.0));
+ DPR=Math.min(window.devicePixelRatio||1, maxDpr);
+ const r=$('#game').getBoundingClientRect();
+ const cw=Math.max(320, Math.round(r.width || window.innerWidth || 320));
+ const ch=Math.max(200, Math.round(r.height || window.innerHeight || 200));
+ cv.width=Math.round(cw*DPR);
+ cv.height=Math.round(ch*DPR);
  // Target in game pixels: 'wide' = 480-560 (nhỏ đồ vật, nhìn xa, bao quát), 'normal' = 360-420, 'close' = 260-300
  let target=ZOOM_MODE==='wide'?(cw<700?460:580):(ZOOM_MODE==='close'?(cw<700?260:320):(cw<700?350:440));
  K=Math.max(1,Math.round(cw*DPR/target));
- VW=Math.ceil(cv.width/K);
- VH=Math.ceil(cv.height/K);
- VIG=mk(VW,VH,g=>{const gr=g.createRadialGradient(VW/2,VH/2,Math.min(VW,VH)*.38,VW/2,VH/2,Math.hypot(VW,VH)*.58);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(12,6,24,.34)');g.fillStyle=gr;g.fillRect(0,0,VW,VH);});
+ VW=Math.max(160, Math.ceil(cv.width/K));
+ VH=Math.max(100, Math.ceil(cv.height/K));
+ try{
+   VIG=mk(VW,VH,g=>{const gr=g.createRadialGradient(VW/2,VH/2,Math.min(VW,VH)*.38,VW/2,VH/2,Math.hypot(VW,VH)*.58);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(12,6,24,.34)');g.fillStyle=gr;g.fillRect(0,0,VW,VH);});
+ }catch(e){}
 }
 addEventListener('resize',resize);
+window.addEventListener('orientationchange',()=>{
+ setTimeout(resize, 100);
+ setTimeout(resize, 300);
+ setTimeout(resize, 600);
+});
 let last=performance.now();
 function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);render();requestAnimationFrame(loop);}
 addEventListener('keydown',e=>{
