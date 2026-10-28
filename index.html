@@ -258,6 +258,9 @@ body.touch #goal{font-size:11px}
     </div>
     <div id="loc" class="panel hidden"></div>
     <div id="topbtns">
+      <button class="btn" id="b-full" title="Toàn màn hình (F)" aria-label="Toàn màn hình">⛶</button>
+      <button class="btn" id="b-zoom" title="Tầm nhìn rộng / vừa / gần (Z)" aria-label="Thu phóng">🔍</button>
+      <button class="btn" id="b-export" title="Tải bản lưu về máy (.json)" aria-label="Tải bản lưu">💾</button>
       <button class="btn" id="b-pass" title="Sổ Tay Mùa Lễ Hội" aria-label="Sổ Tay Mùa Lễ Hội">📜</button>
       <button class="btn" id="b-coop" title="Co-op: chơi cùng bạn bè" aria-label="Co-op">🤝</button>
       <button class="btn" id="b-quest" title="Sổ Nhiệm Vụ (L)" aria-label="Sổ Nhiệm Vụ">📖</button>
@@ -4986,12 +4989,43 @@ document.addEventListener('input',e=>{
 });
 
 /* ===================== KHUNG HÌNH & NHẬP LIỆU ===================== */
+let ZOOM_MODE = localStorage.getItem('pn_zoom_mode') || 'wide';
+
+function toggleZoom(){
+ if(ZOOM_MODE==='wide'){ZOOM_MODE='normal';toast('🔍 Tầm nhìn: Vừa');}
+ else if(ZOOM_MODE==='normal'){ZOOM_MODE='close';toast('🔍 Tầm nhìn: Gần (Phóng to)');}
+ else{ZOOM_MODE='wide';toast('🔍 Tầm nhìn: Rộng (Thu nhỏ - Nhìn bao quát cả nông trại)');}
+ localStorage.setItem('pn_zoom_mode',ZOOM_MODE);
+ resize();
+}
+
+function toggleFullScreen(){
+ const doc=document.documentElement;
+ const isFull=document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement;
+ if(!isFull){
+  const rfs=doc.requestFullscreen||doc.webkitRequestFullscreen||doc.mozRequestFullScreen||doc.msRequestFullscreen;
+  if(rfs){
+   rfs.call(doc).then(()=>{
+    if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{});
+   }).catch(()=>{});
+  }
+  toast('📱 Đã bật toàn màn hình!');
+ }else{
+  const efs=document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen||document.msExitFullscreen;
+  if(efs)efs.call(document).catch(()=>{});
+  toast('Đã thoát toàn màn hình');
+ }
+}
+
 function resize(){
  DPR=window.devicePixelRatio||1;const r=$('#game').getBoundingClientRect();
  const cw=Math.max(1,r.width),ch=Math.max(1,r.height);
  cv.width=Math.round(cw*DPR);cv.height=Math.round(ch*DPR);
- const target=cw<700?260:Math.min(520,Math.max(380,cw/2.8));
- K=Math.max(1,Math.round(cw*DPR/target));VW=Math.ceil(cv.width/K);VH=Math.ceil(cv.height/K);
+ // Target in game pixels: 'wide' = 480-560 (nhỏ đồ vật, nhìn xa, bao quát), 'normal' = 360-420, 'close' = 260-300
+ let target=ZOOM_MODE==='wide'?(cw<700?460:580):(ZOOM_MODE==='close'?(cw<700?260:320):(cw<700?350:440));
+ K=Math.max(1,Math.round(cw*DPR/target));
+ VW=Math.ceil(cv.width/K);
+ VH=Math.ceil(cv.height/K);
  VIG=mk(VW,VH,g=>{const gr=g.createRadialGradient(VW/2,VH/2,Math.min(VW,VH)*.38,VW/2,VH/2,Math.hypot(VW,VH)*.58);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(12,6,24,.34)');g.fillStyle=gr;g.fillRect(0,0,VW,VH);});
 }
 addEventListener('resize',resize);
@@ -5010,6 +5044,8 @@ addEventListener('keydown',e=>{
  if(c==='KeyB'&&S.map==='mine'&&!RACE&&!DEF){bombThrow();return;}
  if(c==='KeyR'&&!RACE&&!WEAVE&&!FISH&&!DEF&&(S.mounts.fox||S.mounts.bapcay)){const o=[null].concat(S.mounts.fox?['fox']:[],S.mounts.bapcay?['bapcay']:[]);S.mount=o[(o.indexOf(S.mount||null)+1)%o.length];toast(S.mount?'Bạn cưỡi '+(S.mount==='fox'?'Cáo Lửa':'Bắp Cày Tinh'):'Bạn xuống khỏi thú cưỡi');sfx('ui');return;}
  if(c==='KeyM'&&S.flags.worldmap&&!RACE&&!WEAVE&&!FISH&&!DEF){openMenu('worldmap');return;}
+ if(c==='KeyF'&&!RACE&&!DEF){toggleFullScreen();return;}
+ if(c==='KeyZ'&&!RACE&&!DEF){toggleZoom();return;}
  if(RACE){if(['ArrowUp','KeyW','ArrowLeft','KeyA'].includes(c))raceSteer(-1);else if(['ArrowDown','KeyS','ArrowRight','KeyD'].includes(c))raceSteer(1);else if(['KeyE','KeyK','Enter'].includes(c)&&!e.repeat)raceBoost();}
  keys[c]=true;
  if((c==='Space'||c==='KeyJ')&&!e.repeat){actQ=true;actionHeld=true;}
@@ -5160,6 +5196,10 @@ if (rotBtn) {
     }
   };
 }
+
+
+const btnFull=$('#b-full');if(btnFull)btnFull.onclick=toggleFullScreen;
+const btnZoom=$('#b-zoom');if(btnZoom)btnZoom.onclick=toggleZoom;
 
 /* ===================== KHỞI ĐỘNG ===================== */
 buildStatic();buildIcons();buildWorld();buildCho();buildSG();
