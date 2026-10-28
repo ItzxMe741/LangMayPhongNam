@@ -311,6 +311,7 @@ body.touch #goal{font-size:11px}
         <button class="btn" id="t-new">Bắt đầu nông trại mới</button>
         <button class="btn" id="t-join-btn">🔑 Vào phòng bạn bè (Co-op)</button>
         <button class="btn" id="t-import">📂 Nạp file lưu (.json)</button>
+        <button class="btn" id="t-export">💾 Xuất file lưu (.json)</button>
         <input type="file" id="t-file-input" accept=".json" style="display:none">
         <button class="btn hidden" id="t-cloud">☁ Tải bản lưu đám mây</button>
       </div>
@@ -373,7 +374,26 @@ function P(g,x,y,w,h,c){if(NOSH&&c.startsWith('rgba(0,0,0'))return;g.fillStyle=c
 function disc(g,cx,cy,r,c){g.fillStyle=c;cx=Math.round(cx);cy=Math.round(cy);for(let dy=-r;dy<=r;dy++){const w=Math.round(Math.sqrt(r*r-dy*dy));g.fillRect(cx-w,cy+dy,w*2+1,1);}}
 function shade(h,a){const n=parseInt(h.slice(1),16);const f=v=>clamp(v+a,0,255);return '#'+((1<<24)|(f(n>>16)<<16)|(f(n>>8&255)<<8)|f(n&255)).toString(16).slice(1);}
 function hexA(h,a){const n=parseInt(h.slice(1),16);return `rgba(${n>>16},${n>>8&255},${n&255},${a})`;}
-function softShadow(g,x,y,rx,a){x=Math.round(x);y=Math.round(y);const ry=Math.max(1,Math.round(rx*.4));for(const [k,al] of [[1.3,.45],[1,1]]){const RX=rx*k,RY=ry*k;g.fillStyle=`rgba(18,22,34,${(a*al*.6).toFixed(3)})`;for(let dy=-Math.ceil(RY);dy<=Math.ceil(RY);dy++){const q=1-(dy*dy)/(RY*RY+.01);if(q<=0)continue;const w=Math.round(RX*Math.sqrt(q));g.fillRect(x-w,y+dy,w*2,1);}}}
+const SHAD_C={};
+function getShadowSpr(rx){
+ rx=Math.round(rx);if(SHAD_C[rx])return SHAD_C[rx];
+ const ry=Math.max(1,Math.round(rx*.4)),w=(rx*3+8)|0,h=(ry*3+8)|0,cx=w/2,cy=h/2;
+ return SHAD_C[rx]=mk(w,h,g=>{
+  for(const [k,al] of [[1.3,.45],[1,1]]){
+   const RX=rx*k,RY=ry*k;g.fillStyle=`rgba(18,22,34,${(al*.6).toFixed(3)})`;
+   for(let dy=-Math.ceil(RY);dy<=Math.ceil(RY);dy++){
+    const q=1-(dy*dy)/(RY*RY+.01);if(q<=0)continue;
+    const sw=Math.round(RX*Math.sqrt(q));g.fillRect(cx-sw,cy+dy,sw*2,1);
+   }
+  }
+ });
+}
+function softShadow(g,x,y,rx,a){
+ if(a<=.01)return;const s=getShadowSpr(rx);
+ g.globalAlpha=Math.min(1,Math.max(0,a));
+ g.drawImage(s,Math.round(x-s.width/2),Math.round(y-s.height/2));
+ g.globalAlpha=1;
+}
 const SCR=document.createElement('canvas');SCR.width=SCR.height=56;const SG=SCR.getContext('2d');
 const SIL=document.createElement('canvas');SIL.width=SIL.height=56;const SLG=SIL.getContext('2d');
 const SCR2=document.createElement('canvas');SCR2.width=SCR2.height=96;const SG2=SCR2.getContext('2d');
@@ -3108,16 +3128,17 @@ function render(){
  const dr=[];
  if(isOut()){
   const OB=OBJ(),SO=SOIL();const wf=Math.floor(tAnim*1.6)%2,SH=[];
+  const isW=(a,c)=>a>=0&&c>=0&&a<W&&c<H&&(WT[c*W+a]===2||WT[c*W+a]===10);
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
    const v=WT[y*W+x],px=x*T,py=y*T,k=x+','+y;
    if(v===2){ctx.drawImage(TS.water[(wf+x+y)%2],px,py);const dp=WDEPTH[y*W+x];if(dp>1){ctx.fillStyle=`rgba(14,46,96,${Math.min(.42,(dp-1)*.12).toFixed(3)})`;ctx.fillRect(px,py,16,16);}
     const sh=((hash(x,y,11)*16+tAnim*5)%16)|0;P(ctx,px+sh,py+3+((hash(x,y,12)*9)|0),3,1,'rgba(205,238,255,.38)');P(ctx,px+((sh+8)%16),py+9+((hash(x,y,17)*5)|0),2,1,'rgba(205,238,255,.25)');
     if(hash(x,y,Math.floor(tAnim*1.7))<.06)P(ctx,px+((hash(x,y,13)*14)|0),py+((hash(x,y,14)*14)|0),1,1,'#ffffff');
-    const ww=(a,c)=>WT[c*W+a]===2||WT[c*W+a]===10,fo=(.35+.25*Math.sin(tAnim*2.2+x*.8+y)).toFixed(2);
-    if(!ww(x,y-1)){P(ctx,px,py,16,2,'#2c6a94');P(ctx,px,py+2,16,1,`rgba(225,244,255,${fo})`);}
-    if(!ww(x,y+1))P(ctx,px,py+14,16,2,`rgba(225,244,255,${fo})`);
-    if(!ww(x-1,y))P(ctx,px,py,1,16,`rgba(225,244,255,${fo})`);
-    if(!ww(x+1,y))P(ctx,px+15,py,1,16,`rgba(225,244,255,${fo})`);}
+    const fo=(.35+.25*Math.sin(tAnim*2.2+x*.8+y)).toFixed(2),foCol=`rgba(225,244,255,${fo})`;
+    if(!isW(x,y-1)){P(ctx,px,py,16,2,'#2c6a94');P(ctx,px,py+2,16,1,foCol);}
+    if(!isW(x,y+1))P(ctx,px,py+14,16,2,foCol);
+    if(!isW(x-1,y))P(ctx,px,py,1,16,foCol);
+    if(!isW(x+1,y))P(ctx,px+15,py,1,16,foCol);}
    else if(v===9){ctx.drawImage(TS.stoneP[(x+y)%2],px,py);}
    else if(v===10){ctx.drawImage(TS.water[(wf+x+y)%2],px,py);const vert=WT[y*W+x-1]===2||WT[y*W+x+1]===2;P(ctx,px,py,16,16,'#a8844e');for(let k2=0;k2<16;k2+=4){if(vert)P(ctx,px,py+k2,16,1,'#7a5a2e');else P(ctx,px+k2,py,1,16,'#7a5a2e');}P(ctx,vert?px:px,vert?py:py,vert?1:16,vert?16:1,'#5a3a1a');P(ctx,vert?px+15:px,vert?py:py+15,vert?1:16,vert?16:1,'#5a3a1a');}
    else if(v===11){P(ctx,px,py,16,16,'#4a4c56');if(hash(x,y,3)<.4)P(ctx,px+((hash(x,y,4)*14)|0),py+((hash(x,y,5)*14)|0),1,1,'#5a5c66');if(x===7&&y%2===0)P(ctx,px+7,py+2,2,10,'#e8c840');}
@@ -5018,7 +5039,8 @@ function toggleFullScreen(){
 }
 
 function resize(){
- DPR=window.devicePixelRatio||1;const r=$('#game').getBoundingClientRect();
+ const isTouch=('ontouchstart' in window||navigator.maxTouchPoints>0||window.innerWidth<900);
+ DPR=Math.min(window.devicePixelRatio||1,isTouch?1.5:2);const r=$('#game').getBoundingClientRect();
  const cw=Math.max(1,r.width),ch=Math.max(1,r.height);
  cv.width=Math.round(cw*DPR);cv.height=Math.round(ch*DPR);
  // Target in game pixels: 'wide' = 480-560 (nhỏ đồ vật, nhìn xa, bao quát), 'normal' = 360-420, 'close' = 260-300
@@ -5200,6 +5222,66 @@ if (rotBtn) {
 
 const btnFull=$('#b-full');if(btnFull)btnFull.onclick=toggleFullScreen;
 const btnZoom=$('#b-zoom');if(btnZoom)btnZoom.onclick=toggleZoom;
+
+function exportSaveGame(){
+ const s=loadSave()||S;
+ if(!s||!s.look){toast('⚠️ Chưa có dữ liệu nông trại để xuất!');return;}
+ const name=(s.name||'nongtrai').replace(/[^a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9]/g,'_');
+ const seasonName=(SEASONS[s.season||0]&&SEASONS[s.season||0].id)||'xuan';
+ const filename=`phongnam_${name}_ngay${s.day||1}_${seasonName}.json`;
+ const data=JSON.stringify(s);
+ const blob=new Blob([data],{type:'application/json'});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');
+ a.href=url;
+ a.download=filename;
+ document.body.appendChild(a);
+ a.click();
+ document.body.removeChild(a);
+ URL.revokeObjectURL(url);
+ toast('💾 Đã xuất file lưu: '+filename);
+}
+
+function importSaveGame(file){
+ if(!file)return;
+ const reader=new FileReader();
+ reader.onload=function(e){
+  try{
+   const txt=e.target.result;
+   const parsed=JSON.parse(txt);
+   if(!parsed||!parsed.look||typeof parsed.day==='undefined'){
+    alert('File không hợp lệ hoặc không phải bản lưu của Làng Mây Phong Nam!');
+    return;
+   }
+   localStorage.setItem(KEY,JSON.stringify(parsed));
+   if(navigator.storage&&navigator.storage.persist){navigator.storage.persist().catch(()=>{});}
+   S=Object.assign(newState(parsed.name,parsed.look),parsed);
+   migrate();
+   toast('🎉 Đã nạp thành công nông trại '+S.name+'!');
+   if(UI.title){
+    startGame(false);
+   }else{
+    location.reload();
+   }
+  }catch(err){
+   alert('Lỗi nạp file: '+err.message);
+  }
+ };
+ reader.readAsText(file);
+}
+
+const bExport=$('#b-export');if(bExport)bExport.onclick=exportSaveGame;
+const tExport=$('#t-export');if(tExport)tExport.onclick=exportSaveGame;
+const tImport=$('#t-import'),tFileInput=$('#t-file-input');
+if(tImport&&tFileInput){
+ tImport.onclick=()=>tFileInput.click();
+ tFileInput.onchange=e=>{
+  if(e.target.files&&e.target.files[0]){
+   importSaveGame(e.target.files[0]);
+   e.target.value='';
+  }
+ };
+}
 
 /* ===================== KHỞI ĐỘNG ===================== */
 buildStatic();buildIcons();buildWorld();buildCho();buildSG();
