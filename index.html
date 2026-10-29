@@ -4268,19 +4268,29 @@ const QUEST_NPC_MAP={
  q34:['coba'],q34m:['coba','muoi'],q35:['dieu'],
  q50:['cuoi'],q51:['bat']
 };
+const SHOP_NPCS=new Set([
+ 'muoi','hung','huong','linh','sau','tham','bat','khang','taibay',
+ 'cuhat','hamy','bena','coba','anhhoang','hoanglong','chutu',
+ 'thaomai','bacba','giangmy','bay','lan','thamkieu','anhbeo',
+ 'hanh','phanvannam','linhtien','dieu'
+]);
 function npcHasQuest(id){
- if(!S||!S.q||!S.q.done)return false;
+ if(!S||!S.q||!S.q.done)return null;
  const qL=typeof questLevel==='function'?questLevel():plv();
  for(const q of QUESTS){
   if(qDone(q.id)||!q.after.every(qDone)||qL<q.lv)continue;
-  if(q.id==='q13'){if(['bat','tham','chutu'].includes(id)&&!(S.qt&&S.qt[id]))return true;continue;}
-  if(q.id==='q31'){if(id==='coba'&&!(S.qt&&S.qt.coba))return true;continue;}
-  if(q.id==='q34'){if(id==='coba'&&(S.fr.coba||0)<750)return true;continue;}
-  if(q.npc===id||(Array.isArray(q.npc)&&q.npc.includes(id)))return true;
-  const targets=QUEST_NPC_MAP[q.id];
-  if(targets&&targets.includes(id))return true;
+  let match=false;
+  if(q.id==='q13'){if(['bat','tham','chutu'].includes(id)&&!(S.qt&&S.qt[id]))match=true;}
+  else if(q.id==='q31'){if(id==='coba'&&!(S.qt&&S.qt.coba))match=true;}
+  else if(q.id==='q34'){if(id==='coba'&&(S.fr.coba||0)<750)match=true;}
+  else if(q.npc===id||(Array.isArray(q.npc)&&q.npc.includes(id)))match=true;
+  else{const targets=QUEST_NPC_MAP[q.id];if(targets&&targets.includes(id))match=true;}
+  if(match){
+   const givesItem=q.goals&&q.goals.some(g=>g.use||g.item);
+   return givesItem?'reward':'quest';
+  }
  }
- return false;
+ return null;
 }
 function npcHasStory(id){
  if(!S||!S.fr)return false;
@@ -4291,9 +4301,27 @@ function npcHasStory(id){
  if(n.ev8&&f>=2000&&!S.events[id+'8'])return true;
  return false;
 }
+function npcIsReward(id){
+ if(!S)return false;
+ if(id==='tam')return true;
+ if(id==='khach')return true;
+ if(id==='anhtuan')return true;
+ if(id==='mebamai')return true;
+ if(id==='hung'&&(!S.flags||!S.flags.godtools))return true;
+ if(id==='bena'&&(!S.flags||!S.flags.school))return true;
+ if(id==='anhhoang'&&(!S.flags||!S.flags.automachine))return true;
+ if(id==='quocbao'&&S.flags&&S.flags.qbDay!==dayIdx())return true;
+ if(id==='thaytao'&&S.flags&&S.flags.sermonDay!==dayIdx())return true;
+ if(npcHasStory(id))return true;
+ return false;
+}
 function npcIndicator(id){
- if(npcHasQuest(id)||npcHasStory(id))return 'quest';
- if(S&&S.talk&&!S.talk[id])return 'talk';
+ if(!S)return null;
+ if(npcIsReward(id))return 'reward';
+ const qStatus=npcHasQuest(id);
+ if(qStatus)return qStatus;
+ if(SHOP_NPCS.has(id))return 'shop';
+ if(S.talk&&!S.talk[id])return 'talk';
  return null;
 }
 function drawNpcBubble(n){
@@ -4301,11 +4329,25 @@ function drawNpcBubble(n){
  const ind=npcIndicator(n.id);if(!ind)return;
  const bx=Math.round(n.px+4);
  const by=Math.round(n.py-(n.look&&n.look.hat?38:34)+(PERF_MODE?0:Math.sin(tAnim*3)));
- if(ind==='quest'){
+ if(ind==='reward'){
   P(ctx,bx,by,9,6,'#ffd860');
   P(ctx,bx+1,by+6,2,1,'#ffd860');
   P(ctx,bx+4,by+1,1,3,'#3b230f');
   P(ctx,bx+4,by+5,1,1,'#3b230f');
+ }else if(ind==='quest'){
+  P(ctx,bx,by,9,6,'#ffd860');
+  P(ctx,bx+1,by+6,2,1,'#ffd860');
+  P(ctx,bx+3,by+1,3,1,'#3b230f');
+  P(ctx,bx+5,by+2,1,1,'#3b230f');
+  P(ctx,bx+4,by+3,1,1,'#3b230f');
+  P(ctx,bx+4,by+5,1,1,'#3b230f');
+ }else if(ind==='shop'){
+  P(ctx,bx,by,9,6,'#2fa360');
+  P(ctx,bx+1,by+6,2,1,'#2fa360');
+  P(ctx,bx+3,by+1,3,1,'#ffffff');
+  P(ctx,bx+2,by+2,5,3,'#ffffff');
+  P(ctx,bx+4,by+2,1,1,'#2fa360');
+  P(ctx,bx+4,by+3,1,1,'#f1b329');
  }else{
   P(ctx,bx,by,9,6,'#fff');
   P(ctx,bx+1,by+6,2,1,'#fff');
