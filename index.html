@@ -3259,7 +3259,7 @@ function render(){
    const al=(.26*SUN.a+.05).toFixed(3);ctx.fillStyle=`rgba(18,24,36,${al})`;
    for(const b of BLD){if(b.id==='da'){softShadow(ctx,(b.x+3)*T+8+SUN.dx*1.5,(b.y+6)*T-3,46,.34*SUN.a+.08);continue;}
     const bx=b.x*T,by=(b.y+b.h)*T,bw=b.w*T;for(let r=0;r<7;r++){ctx.globalAlpha=1-r/7;ctx.fillRect(bx+2+Math.round(SUN.dx*r/7),by-1+r,bw-4,1);}ctx.globalAlpha=1;
-    if(Math.abs(SUN.dx)>1)ctx.fillRect(SUN.dx>0?bx+bw-2:bx+2+Math.round(SUN.dx*.6),b.y*T+Math.round(b.h*T*.45),Math.round(Math.abs(SUN.dx)*.6),Math.round(b.h*T*.55)+1);}}
+    if(Math.abs(SUN.dx)>1)ctx.fillRect(SUN.dx>0?bx+bw-2:bx+2+Math.round(SUN.dx*.6),b.y*T+Math.round(b.h*T*.45),Math.round(Math.abs(SUN.dx)*.6),Math.round(b.h*T*.55)+1);}
   }
   const done=BUNDLES.filter(bundleDone).length;
   for(const b of BLD){
@@ -5638,7 +5638,7 @@ buildStatic();buildIcons();buildWorld();buildCho();buildSG();
 S=newState('',lookFrom());S.zv=1;S.qm=1;spawnLotus();buildSeason(0);
 if(!loadSave())$('#t-cont').classList.add('hidden');
 resize();requestAnimationFrame(loop);initOnline();
-$('#t-cloud').onclick=()=>{if(!CLOUDSAVE)return;try{const d=JSON.parse(CLOUDSAVE.json);S=Object.assign(newState(d.name,d.look),d);migrate();startGame(false);}catch(e){toast('Bản lưu đám mây bị lỗi.');}};
+const tCloud=$('#t-cloud');if(tCloud)tCloud.onclick=()=>{if(!CLOUDSAVE)return;try{const d=JSON.parse(CLOUDSAVE.json);S=Object.assign(newState(d.name,d.look),d);migrate();startGame(false);}catch(e){toast('Bản lưu đám mây bị lỗi.');}};
 </script>
 </body>
 </html>
