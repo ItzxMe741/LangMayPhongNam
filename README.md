@@ -16,6 +16,37 @@
   - 1 Host + tối đa 4 Guest kết nối trực tiếp qua mã phòng PeerJS (WebRTC DataChannel).
   - Khách vào chơi có khoảnh đất và căn nhà riêng biệt, tự do canh tác và lưu lại nông trại trên máy Host.
 - ⚡ **Zero Setup & Lightweight**: Chạy trực tiếp chỉ bằng cách mở tệp HTML trên mọi trình duyệt web (Chrome, Edge, Firefox, Safari) trên cả máy tính lẫn di động.
+- 🏷️ **Hệ thống biểu tượng NPC thông minh**: Trực quan hóa vai trò dân làng với 4 biểu tượng riêng biệt (`!`, `?`, `👜`, `...`).
+- ☁️ **Lưu đám mây không lo mất Save**: Đồng bộ qua Tên tài khoản & Mật khẩu trực tiếp lên đám mây Vercel KV / Firebase, không sợ mất dữ liệu khi xóa cache hay duyệt web ẩn danh.
+
+---
+
+## 🏷️ Bảng Hệ Thống Biểu Tượng Trên Đầu NPC
+
+Hệ thống biểu tượng trên đầu NPC trong game được thiết kế trực quan theo phong cách Pixel Art, giúp người chơi dễ dàng nhận diện vai trò, nhiệm vụ và các tương tác đặc biệt:
+
+| Biểu tượng | Màu sắc & Kiểu dáng | Ý nghĩa tương tác | Các NPC áp dụng & Hành vi |
+| :---: | :---: | :--- | :--- |
+| **`!`** | **Bong bóng Vàng Kim (`#ffd860`)**<br>Dấu chấm than nâu sẫm (`#3b230f`) | **Khoe đồ nhận thưởng / Đổi vật phẩm lấy thưởng / Cho quà miễn phí**<br>*(Hiển thị cố định và không bao giờ mất)* | • **Chú Tám** (`tam`): Khoe cá hiếm câu được để bán gấp đôi giá chợ (`x2`).<br>• **Khách Phương Xa** (`khach`): Đơn hàng thuyền buôn mỗi ngày (trả thưởng `x2.5`).<br>• **Hùng Thợ Rèn** (`hung`): Nộp 4 Mảnh Khuôn Đúc Cổ để đúc bộ đồ Thần.<br>• **Anh Tuấn** (`anhtuan`): Định giá & mở kho đồ cũ giá cao hơn 15%.<br>• **Mẹ Mai** (`mebamai`): Cho đồ ăn / bánh chưng / cơm nắm mỗi ngày.<br>• **Bé Na** (`bena`): Quyên góp tiền xây Trường Học Làng Mây.<br>• **Anh Hoàng** (`anhhoang`): Chế tạo Máy Tự Động Hóa Trang Trại.<br>• **Quốc Bảo** (`quocbao`): Cho phân bón thử nghiệm miễn phí mỗi ngày.<br>• **Thầy Táo** (`thaytao`): Giảng sách nhận +5 Nhân Đức mỗi ngày. |
+| **`?`** | **Bong bóng Vàng Kim (`#ffd860`)**<br>Dấu hỏi nâu sẫm (`#3b230f`) | **Có thể nhận nhiệm vụ mới / Cần trò chuyện tiếp bước nhiệm vụ** | • Các NPC đang giữ nhiệm vụ chính hoặc nhiệm vụ phụ cần bạn tiếp nhận/nói chuyện (như **Cụ Bát** ở `q11`, `q12`; **Chú Sáu** ở `q14`, `q15`; **Chú Tư & Cô Ba Thắm** ở `q13`...).<br>• Sau khi hoàn thành nhiệm vụ, dấu `?` sẽ tự động chuyển sang icon Cửa hàng hoặc ẩn. |
+| **👜** | **Bong bóng Xanh Ngọc (`#2fa360`)**<br>Túi hàng trắng & khóa vàng | **Cửa hàng / Dịch vụ buôn bán**<br>*(Hiển thị thường trực giúp dễ tìm tiệm)* | • Các NPC bán hạt giống, nông sản, rèn đúc, quán ăn, trà, thuốc men, xe buýt:<br>**Bà Mười** (Tạp hóa & hạt giống), **Cô Ba** (Nước mía), **Chú Tư** (Quán ăn đêm), **Cô Ba Thắm** (Tiệm may), **Bác Sĩ Lan** (Trạm y tế), **Hương** (Tiệm trà), **Linh** (Phân bón), **Chú Bảy** (Cây giống), **Phan Văn Nam** (Cá tươi), **Bác Ba** (Nâng cấp nông cụ)... |
+| **`...`** | **Bong bóng Trắng (`#ffffff`)**<br>Ba dấu chấm xám (`#555555`) | **Dân làng còn lại chỉ để trò chuyện tâm tình & tặng quà** | • Các NPC thuần giao lưu, kết bạn, hẹn hò, tăng độ thân thiết:<br>**Bé Tí**, **An** (thổi sáo trúc), **Lương Anh Tuấn** (bác sĩ thú y), **Ông Tư** (mẹo câu cá), **Ông Hai “Nổ”**...<br>• **Chỉ hiện khi chưa nói chuyện hôm nay**; sau khi trò chuyện xong sẽ **tự động ẩn** để màn hình luôn thoáng đãng. |
+
+### Quy tắc phân cấp ưu tiên (Priority Hierarchy)
+1. **Ưu tiên 1 (Cao nhất) - Khoe đồ / Đổi vật phẩm nhận thưởng (`!`)**: Luôn hiển thị thường trực, không bị ẩn khi nói chuyện.
+2. **Ưu tiên 2 - Tiếp nhận & Trò chuyện nhiệm vụ (`?`)**: Ưu tiên đè lên icon bán hàng để người chơi không bỏ lỡ cốt truyện.
+3. **Ưu tiên 3 - Cửa hàng buôn bán (👜)**: Luôn hiển thị thường trực khi không vướng nhiệm vụ.
+4. **Ưu tiên 4 - Trò chuyện hàng ngày (`...`)**: Chỉ hiện khi chưa chào hỏi hôm nay (+20 tim, +2 EXP), nói xong tự động biến mất.
+
+---
+
+## ☁️ Hệ Thống Lưu Đám Mây (Cloud Save - Không Sợ Mất Dữ Liệu)
+
+Không cần tải file JSON về máy, bạn có thể lưu trữ tiến trình trực tiếp lên Đám Mây:
+- **Đăng ký / Đăng nhập**: Nhập **Tên tài khoản** và **Mật khẩu** bất kỳ tại bảng Lưu Đám Mây (ở màn hình chính hoặc biểu tượng ☁️ góc trên màn hình).
+- **Đồng bộ tự động**: Game tự động lưu đồng bộ lên đám mây mỗi khi nhân vật đi ngủ qua ngày mới.
+- **Bảo mật & Tiện lợi**: Không sợ mất dữ liệu khi xóa cache trình duyệt, đổi thiết bị, dùng tab ẩn danh hay chơi trên điện thoại / PC khác nhau.
+- **Hạ tầng hỗ trợ**: Hỗ trợ Vercel Serverless KV (Upstash Redis) và Firebase Firestore.
 
 ---
 
