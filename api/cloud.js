@@ -2,10 +2,10 @@
 // Supports Vercel KV / Upstash Redis, or memory/external stores
 
 export default async function handler(req, res) {
-  // Enable CORS so GitHub Pages (itzxme741.github.io) can call this API
+  // Enable CORS so all clients (Vercel, GitHub Pages, Local) can call this API
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -20,7 +20,11 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     try {
-      const { user, pass, data } = req.body || {};
+      let body = req.body;
+      if (typeof body === 'string') {
+        try { body = JSON.parse(body); } catch(e) {}
+      }
+      const { user, pass, data } = body || {};
       if (!user || !pass || !data) {
         return res.status(400).json({ error: 'Thiếu thông tin user, pass hoặc data' });
       }

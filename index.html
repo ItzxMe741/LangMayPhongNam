@@ -3838,7 +3838,14 @@ window.FIREBASE_CONFIG = window.FIREBASE_CONFIG || {
 };
 
 const CloudNet = {
-  apiBase: 'https://langmayphongnamgame.vercel.app/api/cloud',
+  get apiBase(){
+    if(typeof window !== 'undefined' && window.location){
+      if(window.location.hostname && window.location.hostname.endsWith('vercel.app')){
+        return '/api/cloud';
+      }
+    }
+    return 'https://langmayphongnamgame-lang-may-phong-nam.vercel.app/api/cloud';
+  },
 
   async save(user, pass, farmData){
     if(!user || !pass) throw new Error('Vui lòng nhập tên tài khoản và mật khẩu!');
