@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="manifest" href="./manifest.json">
 <!-- Firebase App & Firestore for optional zero-friction Cloud Save -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -5206,9 +5207,9 @@ document.addEventListener('input',e=>{
 let ZOOM_MODE = localStorage.getItem('pn_zoom_mode') || 'wide';
 
 function toggleZoom(){
- if(ZOOM_MODE==='wide'){ZOOM_MODE='normal';toast('🔍 Tầm nhìn: Vừa');}
- else if(ZOOM_MODE==='normal'){ZOOM_MODE='close';toast('🔍 Tầm nhìn: Gần (Phóng to)');}
- else{ZOOM_MODE='wide';toast('🔍 Tầm nhìn: Rộng (Thu nhỏ - Nhìn bao quát cả nông trại)');}
+ if(ZOOM_MODE==='wide'){ZOOM_MODE='normal';toast('🔍 Tầm nhìn: Vừa (Tiêu chuẩn)');}
+ else if(ZOOM_MODE==='normal'){ZOOM_MODE='close';toast('🔍 Tầm nhìn: Gần (Phóng to chi tiết)');}
+ else{ZOOM_MODE='wide';toast('🔍 Tầm nhìn: Rộng (Toàn cảnh - Nhìn bao quát toàn bộ nông trại)');}
  localStorage.setItem('pn_zoom_mode',ZOOM_MODE);
  resize();
 }
@@ -5261,11 +5262,21 @@ function resize(){
  // Target in game pixels: 'wide' = 420-560, 'normal' = 320-380, 'close' = 240-280
  let target;
  if(isMobile){
-  target = ZOOM_MODE==='wide' ? 460 : (ZOOM_MODE==='close' ? 260 : 340);
-  K = Math.max(2, Math.round(cw*DPR/target));
+  if(ZOOM_MODE==='wide'){
+   K = 1; // Cho phép nhìn bao quát toàn bộ cảnh vật nông trại trên điện thoại
+  }else if(ZOOM_MODE==='close'){
+   K = Math.max(3, Math.round(cw*DPR/280));
+  }else{
+   K = Math.max(2, Math.round(cw*DPR/420));
+  }
  }else{
-  target = ZOOM_MODE==='wide' ? 820 : (ZOOM_MODE==='close' ? 360 : 540);
-  K = Math.max(1, Math.round(cw*DPR/target));
+  if(ZOOM_MODE==='wide'){
+   K = Math.max(1, Math.round(cw*DPR/860));
+  }else if(ZOOM_MODE==='close'){
+   K = Math.max(3, Math.round(cw*DPR/360));
+  }else{
+   K = Math.max(2, Math.round(cw*DPR/540));
+  }
  }
  VW=Math.max(160, Math.ceil(cv.width/K));
  VH=Math.max(100, Math.ceil(cv.height/K));
@@ -5638,6 +5649,17 @@ S=newState('',lookFrom());S.zv=1;S.qm=1;spawnLotus();buildSeason(0);
 if(!loadSave())$('#t-cont').classList.add('hidden');
 resize();requestAnimationFrame(loop);initOnline();
 const tCloud=$('#t-cloud');if(tCloud)tCloud.onclick=()=>{if(!CLOUDSAVE)return;try{const d=JSON.parse(CLOUDSAVE.json);S=Object.assign(newState(d.name,d.look),d);migrate();startGame(false);}catch(e){toast('Bản lưu đám mây bị lỗi.');}};
+// Service Worker Offline Cache & Persistent Storage
+if('serviceWorker' in navigator){
+ window.addEventListener('load',()=>{
+  navigator.serviceWorker.register('./sw.js').then(reg=>{
+   console.log('PhongNam Offline Cache ServiceWorker ready:', reg.scope);
+  }).catch(()=>{});
+ });
+}
+if(navigator.storage&&navigator.storage.persist){
+ navigator.storage.persist().catch(()=>{});
+}
 </script>
 </body>
 </html>
